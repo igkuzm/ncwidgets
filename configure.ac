@@ -1,0 +1,13 @@
+AC_INIT(nclib, 1.0)
+AM_INIT_AUTOMAKE
+
+AC_PROG_CC
+
+LT_INIT
+
+AC_CONFIG_FILES([
+Makefile
+src/Makefile
+])
+
+AC_OUTPUT
