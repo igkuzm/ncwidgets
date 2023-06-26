@@ -208,7 +208,7 @@ void nc_entry_remove_char(ncentry_t *ncentry)
 void nc_entry_activate(
 		ncentry_t *ncentry,
 		void *userdata,
-		int (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
 		)
 {
 	nc_entry_set_focused(ncentry, true);
@@ -217,9 +217,13 @@ void nc_entry_activate(
 	while (ch != CTRL('x')) {
 		ch = getch();
 		// stop execution if callback not NULL
-		if (callback)
-			if(callback(userdata, SCREEN_ncentry, ncentry, ch))
+		if (callback){
+			CBRET ret = callback(userdata, SCREEN_ncentry, ncentry, ch);
+			if (ret == CBBREAK)
 				break;
+			else if (ret == CBCONTUNUE)
+				continue;
+		}
 
 		//switch keys
 		switch (ch) {

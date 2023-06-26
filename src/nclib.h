@@ -2,7 +2,7 @@
  * File              : nclib.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 14.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -21,6 +21,5 @@ void nc_init(
 		const char *locale,
 		int color
 		);
-
 
 #endif /* ifndef NC_LIB_H */

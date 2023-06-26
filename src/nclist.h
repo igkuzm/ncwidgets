@@ -2,7 +2,7 @@
  * File              : nclist.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 14.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -55,7 +55,7 @@ void nc_list_set_focused(nclist_t *nclist, bool focused);
 void nc_list_activate(
 		nclist_t *nclist,
 		void *userdata,
-		int (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
 		);
 
 #define nc_activate_nclist(object, data, callback)\

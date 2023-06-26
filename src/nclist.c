@@ -145,7 +145,7 @@ void nc_list_set_focused(nclist_t *nclist, bool focused)
 void nc_list_activate(
 		nclist_t *nclist,
 		void *userdata,
-		int (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)		
+		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)		
 		)
 {
 	nc_list_set_focused(nclist, true);
@@ -154,9 +154,13 @@ void nc_list_activate(
 	while (ch != CTRL('x')) {
 		ch = getch();
 		// stop execution if callback not NULL
-		if (callback)
-			if(callback(userdata, SCREEN_nclist, nclist, ch))
+		if (callback){
+			CBRET ret = callback(userdata, SCREEN_nclist, nclist, ch);
+			if (ret == CBCONTUNUE)
+				continue;
+			else if (ret == CBBREAK)
 				break;
+		}
 
 		//switch keys
 		switch (ch) {

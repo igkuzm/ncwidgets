@@ -2,7 +2,7 @@
  * File              : types.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 21.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -19,5 +19,11 @@ enum SCREEN {
 	NCSCREENS
 #undef NCSCREEN
 };
+
+typedef enum {
+	CBNONE = 0,
+	CBBREAK,
+	CBCONTUNUE,
+} CBRET;
 
 #endif /* ifndef NC_TYPES_H */

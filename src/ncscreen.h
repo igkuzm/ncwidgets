@@ -2,7 +2,7 @@
  * File              : ncscreen.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 21.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -10,6 +10,7 @@
 #define NC_SCREEN_H
 
 #include <curses.h>
+#include <ncurses.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include "keys.h"
@@ -78,15 +79,17 @@ struct nc_screen_data {
 	ncscreen_node_t *root;
 	ncscreen_node_t *ptr;
 	void *userdata;
-	int (*callback)(void *userdata, enum SCREEN type, void *object, chtype key);
+	CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key);
 };
 
 static int nc_screen_cb(void *userdata, enum SCREEN type, void *object, chtype key)
 {
 	struct nc_screen_data *d = userdata;
-	if (d->callback)
-		if (d->callback(d->userdata, type, object, key))
-			return 1;
+	if (d->callback){
+		CBRET ret = d->callback(d->userdata, type, object, key);
+			if (ret == CBBREAK)
+				return ret;
+	}
 
 	//switch keys
 	switch (key) {
@@ -154,6 +157,7 @@ NCSCREENS
 #undef NCSCREEN
 							}						
 						}
+					ungetmouse(&event);
 					}
 				}
 				break;
@@ -166,7 +170,7 @@ static void nc_screen_activate(
 		ncscreen_node_t *root,
 		void *selected,
 		void *userdata,
-		int (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
 		)
 {
 	// ptr is selected object in screen

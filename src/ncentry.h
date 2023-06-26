@@ -2,7 +2,7 @@
  * File              : ncentry.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 16.06.2023
- * Last Modified Date: 21.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -58,7 +58,7 @@ void nc_entry_set_focused(ncentry_t *ncentry, bool focused);
 void nc_entry_activate(
 		ncentry_t *ncentry,
 		void *userdata,
-		int (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
 		);
 
 #define nc_activate_ncentry(object, data, callback)\
