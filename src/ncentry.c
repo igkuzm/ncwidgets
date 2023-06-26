@@ -2,7 +2,7 @@
  * File              : ncentry.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 16.06.2023
- * Last Modified Date: 21.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -352,7 +352,7 @@ void nc_entry_activate(
 					nc_enrty_refresh(ncentry);
 				}
 
-			case KEY_ENTER: case KEY_RETURN:
+			case KEY_ENTER: case KEY_RETURN: case '\r':
 				{
 					u8char_t u8ch;
 					u8ch.utf8[0] = '\n'; 
