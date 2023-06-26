@@ -2,7 +2,7 @@
  * File              : nclib.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 13.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -18,6 +18,9 @@ void nc_init(
 	if (!locale)
 		locale = "";
 	setlocale(LC_ALL, locale);
+
+	#undef  NCURSES_MOUSE_VERSION
+	#define NCURSES_MOUSE_VERSION 2
 
 	initscr();
 
