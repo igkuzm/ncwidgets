@@ -99,7 +99,7 @@ typedef struct {
 } u8char_t;
 
 static char *
-ucharstr2str(const u8char_t *ucharstr, int color)
+ucharstr2str(const u8char_t *ucharstr)
 {
 	int size = BUFSIZ;
 	char *str = malloc(size);
