@@ -2,7 +2,7 @@
  * File              : nclist.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 15.06.2023
+ * Last Modified Date: 26.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -53,12 +53,16 @@ nc_list_refresh(
 			str = &str[nclist->xpos];
 
 			for (x = 0; x < w - 2 && str[x].utf8[0]; ++x) {
+				if (str[x].utf8[0] == '\n') str[x].utf8[0] = ' ';
+				if (str[x].utf8[0] == '\r') str[x].utf8[0] = ' ';
 				wattron(nclist->ncwin->overlay, str[x].attr | A_REVERSE);
 				waddstr(nclist->ncwin->overlay, str[x].utf8);	
 				wattroff(nclist->ncwin->overlay, str[x].attr| A_REVERSE);
 			}
 		} else {
 			for (x = 0; x < w - 2 && str[x].utf8[0]; ++x) {
+				if (str[x].utf8[0] == '\n') str[x].utf8[0] = ' ';
+				if (str[x].utf8[0] == '\r') str[x].utf8[0] = ' ';
 				wattron(nclist->ncwin->overlay, str[x].attr);
 				waddstr(nclist->ncwin->overlay, str[x].utf8);	
 				wattroff(nclist->ncwin->overlay, str[x].attr);
