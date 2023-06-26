@@ -2,7 +2,7 @@
  * File              : nclist.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 26.06.2023
+ * Last Modified Date: 27.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -148,6 +148,7 @@ void nc_list_activate(
 		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)		
 		)
 {
+
 	nc_list_set_focused(nclist, true);
 
 	chtype ch;
@@ -250,8 +251,13 @@ void nc_list_activate(
 							if (event.bstate & BUTTON1_PRESSED){
 								int selectedRow = event.y - y - 1;
 								if (nclist->selected == selectedRow){
-									ch = KEY_RETURN;
-									break;
+									if (callback){
+										CBRET ret = callback(userdata, SCREEN_nclist, nclist, KEY_RETURN);
+										if (ret == CBCONTUNUE)
+											continue;
+										else if (ret == CBBREAK)
+											break;
+									}
 								}
 								if (selectedRow + nclist->ypos < nclist->size)
 									nclist->selected = selectedRow + nclist->ypos;	

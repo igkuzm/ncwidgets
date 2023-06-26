@@ -2,7 +2,7 @@
  * File              : utils.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 21.06.2023
+ * Last Modified Date: 27.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -97,6 +97,41 @@ typedef struct {
 	char utf8[7];
 	attr_t attr;
 } u8char_t;
+
+static char *
+ucharstr2str(const u8char_t *ucharstr, int color)
+{
+	int size = BUFSIZ;
+	char *str = malloc(size);
+	if (!str)
+		return NULL;
+
+	size_t i = 0, l = 0;
+	while (ucharstr[i].utf8[0]){
+		const char *s = ucharstr[i++].utf8;
+		int len = strlen(s);
+
+		//realloc size
+		if (size < l + len){
+			size += BUFSIZ;
+			void *ptr = realloc(str, size);
+			if (!ptr)
+				return NULL;
+			str = ptr;
+		}
+
+		//set string
+		int k;
+		for (k = 0; k < len; ++k) {
+			str[l++] = s[k];
+		}
+	}
+
+	//terminate string
+	str[l] = 0;
+
+	return str;
+}
 
 static u8char_t *
 str2ucharstr(const char *str, int color)
