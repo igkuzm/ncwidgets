@@ -76,7 +76,7 @@ nc_list_refresh(
 void
 nc_list_set_value(
 		nclist_t *nclist,
-		const char **value,
+		char **value,
 		int size		
 		)
 {
@@ -101,7 +101,7 @@ nc_list_new(
 		const char *title,
 		int h, int w, int y, int x,
 		int color,
-		const char **value,
+		char **value,
 		int size,
 		bool box,
 		bool shadow
@@ -157,7 +157,7 @@ void nc_list_activate(
 		// stop execution if callback not NULL
 		if (callback){
 			CBRET ret = callback(userdata, SCREEN_nclist, nclist, ch);
-			if (ret == CBCONTUNUE)
+			if (ret == CBCONTINUE)
 				continue;
 			else if (ret == CBBREAK)
 				break;
@@ -253,7 +253,7 @@ void nc_list_activate(
 								if (nclist->selected == selectedRow){
 									if (callback){
 										CBRET ret = callback(userdata, SCREEN_nclist, nclist, KEY_RETURN);
-										if (ret == CBCONTUNUE)
+										if (ret == CBCONTINUE)
 											continue;
 										else if (ret == CBBREAK)
 											break;

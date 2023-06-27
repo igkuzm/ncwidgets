@@ -2,7 +2,7 @@
  * File              : ncbutton.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 26.06.2023
+ * Last Modified Date: 27.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -121,7 +121,7 @@ void nc_button_activate(
 			CBRET ret = callback(userdata, SCREEN_ncbutton, ncbutton, ch);
 			if (ret == CBBREAK)
 				break;
-			else if (ret == CBCONTUNUE)
+			else if (ret == CBCONTINUE)
 				continue;
 		}
 

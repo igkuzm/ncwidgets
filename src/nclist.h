@@ -2,7 +2,7 @@
  * File              : nclist.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 26.06.2023
+ * Last Modified Date: 27.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -29,7 +29,7 @@ nclist_t * nc_list_new(
 		const char *title,
 		int h, int w, int y, int x,
 		int color,
-		const char **value,
+		char **value,
 		int size,
 		bool box,
 		bool shadow
@@ -37,7 +37,7 @@ nclist_t * nc_list_new(
 
 void nc_list_set_value(
 		nclist_t *nclist,
-		const char **value,
+		char **value,
 		int size		
 		);
 
