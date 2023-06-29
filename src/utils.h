@@ -2,7 +2,7 @@
  * File              : utils.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 27.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -232,11 +232,34 @@ move_char_right(char *str)
 }
 
 static int
-strchars(char *str)
+uchar_index(char *str, int char_index)
 {
+	int i = 0, k;
+	for (k = 0; k < char_index; ++k) {
+		unsigned char c = str[i];
+		if      (c >= 252) /* 6-bytes */
+			i+=6;
+		else if (c >= 248) /* 5-bytes */
+			i+=5;
+		else if (c >= 240) /* 4-bytes */
+			i+=4;
+		else if (c >= 224) /* 3-bytes */
+			i+=3;
+		else if (c >= 192) /* 2-bytes */
+			i+=2;
+		else               /* 1-byte  */
+			i++;
+	}
+	return i;
+}
+
+static int
+strchars(const char *str)
+{
+	char * ptr = (char *)str;
 	int c = 0;
-	while (*str){
-		str = move_char_right(str);
+	while (*ptr){
+		ptr = move_char_right(ptr);
 		c++;
 	}
 	

@@ -2,7 +2,7 @@
  * File              : types.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 27.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -13,6 +13,7 @@
 	NCSCREEN(nclist)\
 	NCSCREEN(ncbutton)\
 	NCSCREEN(ncentry)\
+	NCSCREEN(nccalendar)\
 
 enum SCREEN {
 #define NCSCREEN(title) SCREEN_##title,
