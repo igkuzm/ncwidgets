@@ -16,6 +16,90 @@
 #include <stdlib.h>
 #include <string.h>
 
+void nc_selection_set_selected(ncselection_t *s, int size, int *selected)
+{
+	int i;
+
+	int *v = malloc(size * sizeof(int));
+	if (!v)
+		return;
+
+	for (i = 0; i < size; ++i)
+		v[i] = selected[i];
+		
+	if (s->selected)
+		free(s->selected);
+
+	s->selected = v;
+}
+
+void nc_selection_set_selections(ncselection_t *s, int count, char **selections)
+{
+	int i;
+	for (i = 0; i < count; ++i){
+		strncpy(s->selections[i], selections[i], MAXSELECTIONLEN - 1);	
+		s->selections[i][MAXSELECTIONLEN - 1] = 0;
+	}
+	s->count = count;
+}
+
+void nc_selection_set_value(ncselection_t *s, int size, char **value)
+{
+	int i;
+
+	// free old info
+	for (i = 0; i < s->nclist->size; ++i)
+		free(s->nclist->info[i]);
+	free(s->nclist->info);
+
+	// allocate new info
+	s->nclist->info = malloc( 8 * size + 8);
+	if (!s->nclist->info)
+		return;
+	s->nclist->size = size;
+
+	// allocate value
+	char **v = malloc( 8 * size);
+	if (!v)
+		return;
+
+	// copy values
+	for (i = 0; i < size; ++i) {
+		int len = strlen(value[i]);
+		v[i] = malloc(len + 1);
+		if (!v[i])
+			return;
+		strcpy(v[i], value[i]);	
+
+		len += MAXSELECTIONLEN;
+		char *str = malloc(len + 1);
+		if (!str)
+			return;
+
+		strcpy(str, s->selections[s->selected[i]]);
+		strcat(str, value[i]);
+	
+		s->nclist->info[i] = str2ucharstr(str, s->nclist->ncwin->color);
+
+		free(str);
+	}
+
+	nc_list_refresh(s->nclist);
+
+	// free old values
+	/*
+	if (s->value){
+		for (i = 0; i < s->size; ++i)
+			free(s->value[i]);
+		free(s->value);
+	}
+	*/
+
+	// set args
+	s->value = v;
+	s->size  = size;
+}
+
 void nc_selection_set(
 		ncselection_t *s, 
 		char **value, 
@@ -29,68 +113,16 @@ void nc_selection_set(
 	int i;
 
 	//set selected
-	if (selected){
-		int *_selected = malloc(size * sizeof(int));
-		if (!_selected)
-			return;
-
-		for (i = 0; i < size; ++i)
-			_selected[i] = selected[i];
+	if (selected)
+		nc_selection_set_selected(s, size, selected);
 		
-		if (s->selected)
-			free(s->selected);
-
-		s->selected = _selected;
-	}
-
 	//set selections
-	if (selections){
-		s->count = count;
-		for (i = 0; i < count; ++i){
-			strncpy(s->selections[i], selections[i], MAXSELECTIONLEN - 1);	
-			s->selections[i][MAXSELECTIONLEN - 1] = 0;
-		}
-	}
+	if (selections)
+		nc_selection_set_selections(s, count, selections);
 	
 	//set value
-	if (value){
-		char ** str = malloc(size * 8);
-		if (!str)
-			return;
-		
-		char ** v = malloc(size * 8);
-		if (!v)
-			return;
-		
-		for (i = 0; i < size; ++i) {
-			int len = strlen(value[i]);
-			v[i] = malloc(len + 1);
-			if (!v[i])
-				return;
-			strcpy(v[i], value[i]);	
-
-			len += MAXSELECTIONLEN;
-			str[i] = malloc(len + 1);
-			if (!str[i])
-				return;
-
-			strcpy(str[i], s->selections[s->selected[i]]);
-			strcat(str[i], value[i]);
-		}
-
-		nc_list_set_value(s->nclist, str, size);
-
-		if (s->value){
-			for (i = 0; i < s->size; ++i) {
-				free(s->value[i]);
-			}
-			free(s->value);
-		}
-
-		s->size = size;
-
-		s->value = v;
-	}
+	if (value)
+		nc_selection_set_value(s, size, value);
 }
 
 ncselection_t *
@@ -120,9 +152,10 @@ nc_selection_new(
 	}
 	
 	s->multiselect = multiselect;
-	s->count = count;
+	s->count = 0;
 	s->size  = 0;
 	s->value = NULL;
+	s->selected = NULL;
 
 	nc_selection_set(s, value, size, selections, count, selected);
 
@@ -165,9 +198,10 @@ nc_selection_select(ncselection_t *s, int index, int selected){
 	else {
 		int i;
 		for (i = 0; i < s->size; ++i) {
-			s->selected[i] = 0;
 			if (i == index)
 				s->selected[i] = 1;		
+			else 
+				s->selected[i] = 0;
 		}
 	}
 
@@ -189,15 +223,16 @@ nc_selection_activate(
 void  nc_selection_destroy(ncselection_t *s){
 	nc_list_destroy(s->nclist);
 	
-	if (s->value){
-		int i;
-		for (i = 0; i < s->size; ++i) {
-			free(s->value[i]);
-		}
-		free(s->value);
-	}
+	//if (s->value){
+		//int i;
+		//for (i = 0; i < s->size; ++i) {
+			//free(s->value[i]);
+		//}
+		//free(s->value);
+	//}
 
 	if (s->selected)
 		free(s->selected);
 
+	free(s);
 }
