@@ -1,0 +1,1 @@
+# Widgets for Curses library
