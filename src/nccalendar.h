@@ -47,7 +47,6 @@ void nc_calendar_refresh(nccalendar_t *nccalendar);
 
 void nc_calendar_destroy(nccalendar_t *nccalendar);
 
-
 void nc_calendar_set_focused(nccalendar_t *nccalendar, bool focused);
 #define nc_set_focused_nccalendar(object, focused)\
 		nc_calendar_set_focused(object, focused)

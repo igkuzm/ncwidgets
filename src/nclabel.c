@@ -2,12 +2,13 @@
  * File              : nclabel.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 16.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
 #include "nclabel.h"
 #include "utils.h"
+#include "keys.h"
 
 void nc_label_refresh(nclabel_t *nclabel){
 	int h, w, y, x;
@@ -24,9 +25,15 @@ void nc_label_refresh(nclabel_t *nclabel){
 		u8char_t *str = nclabel->info[y]; 
 		
 		for (x = 0; x < w - 2 && str[x].utf8[0]; ++x) {
-			wattron (nclabel->ncwin->overlay, str[x].attr);
-			waddstr (nclabel->ncwin->overlay, str[x].utf8);	
-			wattroff(nclabel->ncwin->overlay, str[x].attr);
+			if (nclabel->focused){
+				wattron (nclabel->ncwin->overlay, str[x].attr | A_REVERSE);
+				waddstr (nclabel->ncwin->overlay, str[x].utf8);	
+				wattroff(nclabel->ncwin->overlay, str[x].attr | A_REVERSE);
+			} else{
+				wattron (nclabel->ncwin->overlay, str[x].attr);
+				waddstr (nclabel->ncwin->overlay, str[x].utf8);	
+				wattroff(nclabel->ncwin->overlay, str[x].attr);
+			}
 		}
 	}
 
@@ -52,7 +59,9 @@ nclabel_t * nc_label_new(
 		free(nclabel);
 		return NULL;
 	}
+	
 	nclabel->lines = lines;
+	nclabel->focused = 0;
 	
 	/* copy values */
 	int i, maxlen = 0;
@@ -90,4 +99,34 @@ void nc_label_destroy(nclabel_t *nclabel)
 	}
 	free(nclabel->info);
 	free(nclabel);
+}
+
+void nc_label_set_focused(nclabel_t *nclabel, bool focused)
+{
+	nclabel->focused = focused;
+	nc_label_refresh(nclabel);
+}
+
+void nc_label_activate(
+		nclabel_t *nclabel,
+		void *userdata,
+		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)		
+		)
+{
+
+	nc_label_set_focused(nclabel, true);
+
+	chtype ch;
+	while (ch != CTRL('x')) {
+		ch = getch();
+		// stop execution if callback not NULL
+		if (callback){
+			CBRET ret = callback(userdata, SCREEN_nclabel, nclabel, ch);
+			if (ret == CBCONTINUE)
+				continue;
+			else if (ret == CBBREAK)
+				break;
+		}
+
+	}
 }

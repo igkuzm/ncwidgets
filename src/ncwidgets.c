@@ -1,12 +1,12 @@
 /**
- * File              : nclib.c
+ * File              : ncwidgets.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 26.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
-#include "nclib.h"
+#include "ncwidgets.h"
 #include <curses.h>
 #include <locale.h>
 
@@ -44,4 +44,9 @@ void nc_init(
 	raw();
 	nonl();
 	noecho();	
+}
+
+void nc_quit()
+{
+	endwin();
 }

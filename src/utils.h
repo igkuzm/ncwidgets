@@ -231,11 +231,12 @@ move_char_right(char *str)
 	return &str[i];
 }
 
+/* return char index of utf8 string n'th miltibite char */
 static int
-uchar_index(char *str, int char_index)
+uchar_index(char *str, int n)
 {
 	int i = 0, k;
-	for (k = 0; k < char_index; ++k) {
+	for (k = 0; k < n; ++k) {
 		unsigned char c = str[i];
 		if      (c >= 252) /* 6-bytes */
 			i+=6;

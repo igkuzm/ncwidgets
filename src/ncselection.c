@@ -2,7 +2,7 @@
  * File              : ncselection.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 27.06.2023
- * Last Modified Date: 27.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -125,6 +125,10 @@ void nc_selection_set(
 		nc_selection_set_value(s, size, value);
 }
 
+void nc_selection_set_focused(ncselection_t *s, bool focused){
+	nc_list_set_focused(s->nclist, focused);
+}
+
 ncselection_t *
 nc_selection_new(
 		PANEL *parent, 
@@ -151,6 +155,7 @@ nc_selection_new(
 		return NULL;
 	}
 	
+	s->ncwin = s->nclist->ncwin;
 	s->multiselect = multiselect;
 	s->count = 0;
 	s->size  = 0;

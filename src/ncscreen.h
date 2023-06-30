@@ -2,7 +2,7 @@
  * File              : ncscreen.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 26.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -20,6 +20,8 @@
 #include "nclabel.h"
 #include "ncbutton.h"
 #include "ncentry.h"
+#include "nccalendar.h"
+#include "ncselection.h"
 
 typedef struct ncscreen_node{
 	struct ncscreen_node *next;
@@ -82,7 +84,7 @@ struct nc_screen_data {
 	CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key);
 };
 
-static int nc_screen_cb(void *userdata, enum SCREEN type, void *object, chtype key)
+static CBRET nc_screen_cb(void *userdata, enum SCREEN type, void *object, chtype key)
 {
 	struct nc_screen_data *d = userdata;
 	if (d->callback){

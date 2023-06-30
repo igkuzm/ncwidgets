@@ -188,7 +188,7 @@ void nc_calendar_activate(
 
 		//switch keys
 		switch (ch) {
-			case KEY_TAB:
+			case KEY_TAB: case KEY_SPACE:
 				{
 					nccalendar->selected++;
 					if (nccalendar->selected > nccalendar_selected_year)

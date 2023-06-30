@@ -11,9 +11,11 @@
 
 #define NCSCREENS\
 	NCSCREEN(nclist)\
+	NCSCREEN(nclabel)\
 	NCSCREEN(ncbutton)\
 	NCSCREEN(ncentry)\
 	NCSCREEN(nccalendar)\
+	NCSCREEN(ncselection)\
 
 enum SCREEN {
 #define NCSCREEN(title) SCREEN_##title,

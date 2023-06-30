@@ -2,13 +2,14 @@
  * File              : ncselection.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 27.06.2023
- * Last Modified Date: 27.06.2023
+ * Last Modified Date: 30.06.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
 #ifndef NC_SELECTION_H
 #define NC_SELECTION_H
 
+#include "ncwin.h"
 #include "utils.h"
 #include "nclist.h"
 
@@ -17,12 +18,14 @@
 
 typedef struct ncselection {
 	nclist_t * nclist;
+	ncwin_t  * ncwin;
 	char selections[MAXSELECTIONS][MAXSELECTIONLEN];
 	int count;
 	char ** value;
 	int size;
 	int * selected;
 	bool multiselect;
+	bool focused;
 	CBRET (*callback)(void *, enum SCREEN, void *, chtype);
 	void *userdata;
 } ncselection_t;
@@ -54,12 +57,16 @@ void nc_selection_set(
 
 void  nc_selection_select(ncselection_t *s, int index, int selected);
 
+void nc_selection_set_focused(ncselection_t *s, bool focused);
+#define nc_set_focused_ncselection(obj, focused) nc_selection_set_focused(obj, focused) 
+
 void
 nc_selection_activate(
 		ncselection_t *s, 
 		void *userdata, 
 		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
 		);
+#define nc_activate_ncselection(obj, d, cb) nc_selection_activate(obj, d, cb) 
 
 void  nc_selection_destroy(ncselection_t *s);
 
