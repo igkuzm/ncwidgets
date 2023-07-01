@@ -172,7 +172,7 @@ CBRET nc_selection_callback(void *userdata, enum SCREEN type, void *object, chty
 	ncselection_t *s = userdata;
 	
 	if (s->callback){
-		CBRET ret = s->callback(s->userdata, type, object, key);
+		CBRET ret = s->callback(s->userdata, SCREEN_ncselection, object, key);
 		if (ret)
 			return ret;
 	}
