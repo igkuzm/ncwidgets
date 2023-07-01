@@ -2,13 +2,13 @@
  * File              : nccalendar.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 29.06.2023
- * Last Modified Date: 30.06.2023
+ * Last Modified Date: 01.07.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
 #include "nccalendar.h"
 #include "keys.h"
-#include "util.h"
+#include "utils.h"
 #include <ncurses.h>
 #include <stdio.h>
 #include <time.h>
