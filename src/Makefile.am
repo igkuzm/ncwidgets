@@ -13,4 +13,3 @@ libncwidgets_a_SOURCES = \
 		ncwin.h       ncwin.c
 
 libncwidgets_a_CFLAGS = @CURSES_CFLAGS@
-libncwidgets_a_LIBADD = @PANEL_LIBS@ @CURSES_LIBS@ @CURSES_CFLAGS@

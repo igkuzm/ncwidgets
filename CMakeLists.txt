@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
-set(TARGET libncwidgets)
+set(TARGET ncwidgets)
 set(VERSION 1.0)
 
 project(
@@ -20,5 +20,3 @@ file(GLOB TARGET_SOURCES "src/*.c")
 add_library(${TARGET} STATIC 
 	${TARGET_SOURCES}
 )
-
-target_link_libraries(${TARGET} ${PANEL_LIBRARY} ${CURSES_LIBRARIES})
