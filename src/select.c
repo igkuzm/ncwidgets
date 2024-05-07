@@ -1,22 +1,20 @@
 /**
- * File              : ncselection.c
+ * File              : select.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
- * Date              : 27.06.2023
- * Last Modified Date: 30.06.2023
+ * Date              : 08.05.2024
+ * Last Modified Date: 08.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
-
-#include "ncselection.h"
-#include "keys.h"
-#include "types.h"
-#include "utils.h"
-#include "nclist.h"
-#include <ncurses.h>
+#include "colors.h"
+#include "ncwidgets.h"
+#include "stuctures.h"
+#include "fm.h"
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include "keys.h"
 
-void nc_selection_set_selected(ncselection_t *s, int size, int *selected)
+void nc_selection_set_selected(NcSelection *s, int size, int *selected)
 {
 	int i;
 
@@ -33,7 +31,8 @@ void nc_selection_set_selected(ncselection_t *s, int size, int *selected)
 	s->selected = v;
 }
 
-void nc_selection_set_selections(ncselection_t *s, int count, char **selections)
+void nc_selection_set_selections(
+		NcSelection *s, int count, char **selections)
 {
 	int i;
 	for (i = 0; i < count; ++i){
@@ -43,20 +42,20 @@ void nc_selection_set_selections(ncselection_t *s, int count, char **selections)
 	s->count = count;
 }
 
-void nc_selection_set_value(ncselection_t *s, int size, char **value)
+void nc_selection_set_value(NcSelection *s, int size, char **value)
 {
 	int i;
 
 	// free old info
-	for (i = 0; i < s->nclist->size; ++i)
-		free(s->nclist->info[i]);
-	free(s->nclist->info);
+	for (i = 0; i < s->nclist.size; ++i)
+		free(s->nclist.info[i]);
+	free(s->nclist.info);
 
 	// allocate new info
-	s->nclist->info = malloc( 8 * size + 8);
-	if (!s->nclist->info)
+	s->nclist.info = malloc( 8 * size + 8);
+	if (!s->nclist.info)
 		return;
-	s->nclist->size = size;
+	s->nclist.size = size;
 
 	// allocate value
 	char **v = malloc( 8 * size);
@@ -79,12 +78,12 @@ void nc_selection_set_value(ncselection_t *s, int size, char **value)
 		strcpy(str, s->selections[s->selected[i]]);
 		strcat(str, value[i]);
 	
-		s->nclist->info[i] = str2ucharstr(str, s->nclist->ncwin->color);
+		s->nclist.info[i] = str2ucharstr(str, s->nclist.ncwidget.ncwin->color);
 
 		free(str);
 	}
 
-	nc_list_refresh(s->nclist);
+	nc_widget_refresh((NcWidget*)s);
 
 	// free old values
 	/*
@@ -101,7 +100,7 @@ void nc_selection_set_value(ncselection_t *s, int size, char **value)
 }
 
 void nc_selection_set(
-		ncselection_t *s, 
+		NcSelection *s, 
 		char **value, 
 		int size, 
 		char **selections, 
@@ -125,54 +124,12 @@ void nc_selection_set(
 		nc_selection_set_value(s, size, value);
 }
 
-void nc_selection_set_focused(ncselection_t *s, bool focused){
-	nc_list_set_focused(s->nclist, focused);
-}
-
-ncselection_t *
-nc_selection_new(
-		PANEL *parent, 
-		const char *title, 
-		int h, int w, int y, int x, 
-		int color, 
-		char **selections,
-		int count,
-		int * selected,
-		bool multiselect,
-		char **value, 
-		int size, 
-		bool box, 
-		bool shadow
-		)
+NCRET nc_selection_callback(NcWidget *widget, void *userdata, chtype key)
 {
-	ncselection_t *s = malloc(sizeof(ncselection_t));
-	if (!s)
-		return NULL;
-
-	s->nclist = nc_list_new(parent, title, h, w, y, x, color, NULL, 0, box, shadow);
-	if (!s->nclist){
-		free(s);
-		return NULL;
-	}
-	
-	s->ncwin = s->nclist->ncwin;
-	s->multiselect = multiselect;
-	s->count = 0;
-	s->size  = 0;
-	s->value = NULL;
-	s->selected = NULL;
-
-	nc_selection_set(s, value, size, selections, count, selected);
-
-	return s;
-}
-
-CBRET nc_selection_callback(void *userdata, enum SCREEN type, void *object, chtype key)
-{
-	ncselection_t *s = userdata;
+	NcSelection *s = userdata;
 	
 	if (s->callback){
-		CBRET ret = s->callback(s->userdata, SCREEN_ncselection, object, key);
+		NCRET ret = s->callback(widget, s->userdata, key);
 		if (ret)
 			return ret;
 	}
@@ -180,13 +137,13 @@ CBRET nc_selection_callback(void *userdata, enum SCREEN type, void *object, chty
 	switch (key) {
 		case KEY_ENTER: case '\n': case '\r': case KEY_SPACE:
 			{
-				int index = s->nclist->selected;
+				int index = s->nclist.selected;
 				int selected = s->selected[index];
 				selected++;
 				if (selected >= s->count)
 					selected = 0;
 				nc_selection_select(s, index, selected);
-				return CBCONTINUE;
+				return NCCONT;
 			}
 
 		defaut: 
@@ -197,7 +154,7 @@ CBRET nc_selection_callback(void *userdata, enum SCREEN type, void *object, chty
 }
 
 void 
-nc_selection_select(ncselection_t *s, int index, int selected){
+nc_selection_select(NcSelection *s, int index, int selected){
 	if (s->multiselect)
 		s->selected[index] = selected;
 	else {
@@ -213,20 +170,24 @@ nc_selection_select(ncselection_t *s, int index, int selected){
 	nc_selection_set(s, s->value, s->size, NULL, 0, s->selected);
 }
 
-void
-nc_selection_activate(
-		ncselection_t *s, 
+void nc_selection_activate(
+		NcWidget *ncwidget, 
 		void *userdata, 
-		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		NCRET (*callback)(NcWidget *, void *, chtype)
 		)
 {
+	NcSelection *s = (NcSelection *)ncwidget;
 	s->callback = callback;
 	s->userdata = userdata;
-	nc_list_activate(s->nclist, s, nc_selection_callback);
+	nc_list_activate((NcWidget*)s, s, nc_selection_callback);
 }
 
-void  nc_selection_destroy(ncselection_t *s){
-	nc_list_destroy(s->nclist);
+void  nc_selection_destroy(NcWidget *ncwidget)
+{
+	NcSelection *s = (NcSelection *)ncwidget;
+	
+	if (s->selected)
+		free(s->selected);
 	
 	//if (s->value){
 		//int i;
@@ -235,9 +196,48 @@ void  nc_selection_destroy(ncselection_t *s){
 		//}
 		//free(s->value);
 	//}
+	
+	nc_widget_destroy(ncwidget);
+}
 
-	if (s->selected)
-		free(s->selected);
+NcWidget *
+nc_selection_new(
+		NcWin *parent, 
+		const char *title, 
+		int h, int w, int y, int x, 
+		int color, 
+		char **selections,
+		int count,
+		int * selected,
+		bool multiselect,
+		char **value, 
+		int size, 
+		bool box, 
+		bool shadow
+		)
+{
+	NcSelection *s = 
+		(NcSelection *)nc_list_new(parent, title, h, w, y, x, color, NULL, 0, box, shadow);
+	if (!s)
+		return NULL;
 
-	free(s);
+	// realloc 
+	s = realloc(s, sizeof(NcSelection));
+	if (!s)
+		return NULL;
+	
+	s->nclist.ncwidget.type = NcWidgetTypeSelection;
+	
+	s->multiselect = multiselect;
+	s->count = 0;
+	s->size  = 0;
+	s->value = NULL;
+	s->selected = NULL;
+
+	s->nclist.ncwidget.on_activate    = nc_selection_activate;
+	s->nclist.ncwidget.on_destroy	    = nc_selection_destroy;
+	
+	nc_selection_set(s, value, size, selections, count, selected);
+
+	return (NcWidget *)s;
 }

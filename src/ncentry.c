@@ -2,22 +2,23 @@
  * File              : ncentry.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 16.06.2023
- * Last Modified Date: 27.06.2023
+ * Last Modified Date: 08.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
-#include "ncentry.h"
+#include "stuctures.h"
 #include "utils.h"
+#include "keys.h"
 #include <ncurses.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-void
-nc_enrty_refresh(ncentry_t *ncentry)
+void nc_entry_refresh(NcWidget *ncwidget)
 {
+	NcEntry *ncentry = (NcEntry *)ncwidget;
 	int h, w, y, x;
-	getmaxyx(ncentry->ncwin->overlay, h, w);
+	getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 
 	u8char_t *str = ncentry->info; 
 
@@ -37,7 +38,7 @@ nc_enrty_refresh(ncentry_t *ncentry)
 	// fill with blank 
 	for (y = 0; y < h-2; ++y)
 		for (x = 0; x < w - 2; x++)
-			mvwaddch(ncentry->ncwin->overlay, y+1, x+1, ' ');	
+			mvwaddch(ncentry->ncwidget.ncwin->overlay, y+1, x+1, ' ');	
 
 	// move string start positions
 	size_t i = 0;
@@ -48,7 +49,7 @@ nc_enrty_refresh(ncentry_t *ncentry)
 	int lines = ncentry->multiline ? h-2 : 1; 
 	bool has_position = false;
 	for (y = 0; y < lines; ++y) {
-		wmove(ncentry->ncwin->overlay, y + 1, 1);		
+		wmove(ncentry->ncwidget.ncwin->overlay, y + 1, 1);		
 		
 		for (x = 0; x < w - 2 && str[i].utf8[0]; ++x){
 			if (str[i].utf8[0] == '\n'){
@@ -56,104 +57,61 @@ nc_enrty_refresh(ncentry_t *ncentry)
 				if (ncentry->multiline)
 					break;
 			}
-			if (i == ncentry->position && ncentry->focused){
-				wattron (ncentry->ncwin->overlay, str[i].attr | A_REVERSE);
-				waddstr (ncentry->ncwin->overlay, str[i].utf8);
-				wattroff(ncentry->ncwin->overlay, str[i].attr | A_REVERSE);
+			if (i == ncentry->position && ncwidget->focused){
+				wattron (ncentry->ncwidget.ncwin->overlay, str[i].attr | A_REVERSE);
+				waddstr (ncentry->ncwidget.ncwin->overlay, str[i].utf8);
+				wattroff(ncentry->ncwidget.ncwin->overlay, str[i].attr | A_REVERSE);
 				has_position = true;
 			} else
-				waddstr (ncentry->ncwin->overlay, str[i].utf8);
+				waddstr (ncentry->ncwidget.ncwin->overlay, str[i].utf8);
 			i++;
 		}
 		
-		if (i == ncentry->position && ncentry->focused && !has_position && x < w - 2){
-			wattron (ncentry->ncwin->overlay, A_REVERSE);
-			waddch  (ncentry->ncwin->overlay, ' ');
-			wattroff(ncentry->ncwin->overlay, A_REVERSE);
+		if (i == ncentry->position && ncwidget->focused && !has_position && x < w - 2){
+			wattron (ncentry->ncwidget.ncwin->overlay, A_REVERSE);
+			waddch  (ncentry->ncwidget.ncwin->overlay, ' ');
+			wattroff(ncentry->ncwidget.ncwin->overlay, A_REVERSE);
 			has_position = true;
 		}
 	}
 
-	wrefresh(ncentry->ncwin->overlay);
+	wrefresh(ncentry->ncwidget.ncwin->overlay);
 }
 
-void
-nc_entry_set_value(
-		ncentry_t *ncentry,
-		const char *value
-		)
+void nc_entry_set_value(NcEntry *ncentry, const char *value)
 {
-	ncentry->info = str2ucharstr(value, ncentry->ncwin->color);
-	nc_enrty_refresh(ncentry);
+	ncentry->info = str2ucharstr(value, ncentry->ncwidget.ncwin->color);
+	nc_entry_refresh((NcWidget*)ncentry);
 }
 
-ncentry_t *
-nc_entry_new(
-		PANEL *parent,
-		const char *title,
-		int h, int w, int y, int x,
-		int color,
-		const char *value,
-		bool multiline,
-		bool box,
-		bool shadow
-		)
-{
-	ncentry_t *ncentry = malloc(sizeof(ncentry_t));
-	if (!ncentry)
-		return NULL;
-
-	ncentry->ncwin = nc_window_new(parent, title, h, w, y, x, color, box, shadow);
-	if (!ncentry->ncwin){
-		free(ncentry);
-		return NULL;
-	}
-
-	ncentry->multiline= multiline;
-	ncentry->position = 0;
-	ncentry->ypos     = 0;
-	ncentry->xpos     = 0;
-	ncentry->focused  = 0;
-
-	if (value && strlen(value)){
-		ncentry->allocated = strlen(value) * sizeof(u8char_t);
-		nc_entry_set_value(ncentry, value);
-		//set position
-		ncentry->position = ucharstrlen(ncentry->info);
-	} else {
-		ncentry->allocated = BUFSIZ;
-		ncentry->info = malloc(BUFSIZ);
-		if (!ncentry->info)
-			return NULL;
-		ncentry->info[0].utf8[0] = 0;
-	} 
-
-
-	return ncentry;
+char *nc_entry_get_value(NcEntry *ncentry){
+	return ucharstr2str(ncentry->info);
 }
 
-void nc_entry_destroy(ncentry_t *ncentry)
+void nc_entry_destroy(NcWidget *ncwidget)
 {
-	nc_window_destroy(ncentry->ncwin);
+	NcEntry *ncentry = (NcEntry*)ncwidget;
+	nc_win_destroy(ncwidget->ncwin);
 	free(ncentry->info);
 	free(ncentry);
 }
 
-void nc_entry_set_position(ncentry_t *ncentry, size_t position){
+void nc_entry_set_position(NcEntry *ncentry, size_t position){
 	ncentry->position = position;
-	nc_enrty_refresh(ncentry);
+	nc_entry_refresh((NcWidget*)ncentry);
 }
 
-size_t nc_entry_get_position(ncentry_t *ncentry){
+size_t nc_entry_get_position(NcEntry *ncentry){
 	return ncentry->position;
 }
 
-void nc_entry_set_focused(ncentry_t *ncentry, bool focused){
-	ncentry->focused = focused;
-	nc_enrty_refresh(ncentry);
+void nc_entry_set_focused(NcWidget *ncwidget, bool focused){
+	ncwidget->focused = focused;
+	nc_win_activate(ncwidget->ncwin);
+	nc_entry_refresh(ncwidget);
 }
 
-void nc_entry_add_char(ncentry_t *ncentry, u8char_t ch)
+void nc_entry_add_char(NcEntry *ncentry, u8char_t ch)
 {
 	// create new buffer
 	size_t len = ucharstrlen(ncentry->info);
@@ -185,7 +143,7 @@ void nc_entry_add_char(ncentry_t *ncentry, u8char_t ch)
 	ncentry->position++;
 }
 
-void nc_entry_remove_char(ncentry_t *ncentry)
+void nc_entry_remove_char(NcEntry *ncentry)
 {
 	// create new buffer
 	size_t len = ucharstrlen(ncentry->info);
@@ -206,22 +164,23 @@ void nc_entry_remove_char(ncentry_t *ncentry)
 
 
 void nc_entry_activate(
-		ncentry_t *ncentry,
+		NcWidget *ncwidget,
 		void *userdata,
-		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		NCRET (*callback)(NcWidget *, void *, chtype)
 		)
 {
-	nc_entry_set_focused(ncentry, true);
+	NcEntry *ncentry = (NcEntry*)ncwidget;
+	nc_entry_set_focused(ncwidget, true);
 
 	chtype ch;
 	while (ch != CTRL('x')) {
 		ch = getch();
 		// stop execution if callback not NULL
 		if (callback){
-			CBRET ret = callback(userdata, SCREEN_ncentry, ncentry, ch);
-			if (ret == CBBREAK)
+			NCRET ret = callback(ncwidget, userdata, ch);
+			if (ret == NCSTOP)
 				break;
-			else if (ret == CBCONTINUE)
+			else if (ret == NCCONT)
 				continue;
 		}
 
@@ -232,7 +191,7 @@ void nc_entry_activate(
 					size_t len = ucharstrlen(ncentry->info);
 					if (ncentry->position < len){
 						ncentry->position++;
-						nc_enrty_refresh(ncentry);
+						nc_entry_refresh(ncwidget);
 					} else {
 						beep();
 					}
@@ -242,14 +201,14 @@ void nc_entry_activate(
 			case KEY_END:
 				{
 					int h, w;
-					getmaxyx(ncentry->ncwin->overlay, h, w);
+					getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 					int width = w-2;
 					size_t len = ucharstrlen(ncentry->info);
 					if (ncentry->position + width < len)
 						ncentry->position += width - 1;
 					else
 						ncentry->position = len;
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 					break;
 				}	
 
@@ -257,7 +216,7 @@ void nc_entry_activate(
 				{
 					if (ncentry->position > 0){
 						ncentry->position--;
-						nc_enrty_refresh(ncentry);
+						nc_entry_refresh(ncwidget);
 					}
 					else{
 						beep();
@@ -268,14 +227,14 @@ void nc_entry_activate(
 			case KEY_HOME:
 				{
 					int h, w;
-					getmaxyx(ncentry->ncwin->overlay, h, w);
+					getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 					int width = w-2;
 					if (ncentry->position > width)
 						ncentry->position -= width;
 					else 
 						ncentry->position = 0;
 
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 					break;
 				}	
 				
@@ -284,14 +243,14 @@ void nc_entry_activate(
 					if (!ncentry->multiline)
 						break;
 					int h, w;
-					getmaxyx(ncentry->ncwin->overlay, h, w);
+					getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 					int width = w-2;
 					size_t len = ucharstrlen(ncentry->info);
 					if (ncentry->position + width < len)
 						ncentry->position += width;
 					else
 						ncentry->position = len;
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 					break;
 				}
 			case KEY_NPAGE:
@@ -299,14 +258,14 @@ void nc_entry_activate(
 					if (!ncentry->multiline)
 						break;					
 					int h, w;
-					getmaxyx(ncentry->ncwin->overlay, h, w);
+					getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 					int width = w-2, height = h - 2;					
 					size_t len = ucharstrlen(ncentry->info);
 					if (ncentry->position + width * height < len)
 						ncentry->position += width * height;
 					else
 						ncentry->position = len;
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 					break;
 				}
 			
@@ -315,13 +274,13 @@ void nc_entry_activate(
 					if (!ncentry->multiline)
 						break;
 					int h, w;
-					getmaxyx(ncentry->ncwin->overlay, h, w);
+					getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 					int width = w-2;
 					if (ncentry->position > width)
 						ncentry->position -= width;
 					else
 						ncentry->position = 0;
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 					break;
 				}				
 			
@@ -330,13 +289,13 @@ void nc_entry_activate(
 					if (!ncentry->multiline)
 						break;
 					int h, w;
-					getmaxyx(ncentry->ncwin->overlay, h, w);
+					getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 					int width = w-2, height = h - 2;					
 					if (ncentry->position > width * height)
 						ncentry->position -= width * height;
 					else
 						ncentry->position = 0;
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 					break;
 				}
 
@@ -344,7 +303,7 @@ void nc_entry_activate(
 				if (ncentry->position == 0)
 					break;
 				nc_entry_remove_char(ncentry);
-				nc_enrty_refresh(ncentry);				
+				nc_entry_refresh(ncwidget);				
 				break;
 			
 			case KEY_TAB:
@@ -353,7 +312,7 @@ void nc_entry_activate(
 					u8ch.utf8[0] = '\t'; 
 					u8ch.utf8[1] = 0; 
 					nc_entry_add_char(ncentry, u8ch);
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 				}
 
 			case KEY_ENTER: case KEY_RETURN: case '\r':
@@ -362,17 +321,17 @@ void nc_entry_activate(
 					u8ch.utf8[0] = '\n'; 
 					u8ch.utf8[1] = 0; 
 					nc_entry_add_char(ncentry, u8ch);
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 				}				
 
 			case KEY_MOUSE:
 				{
 					MEVENT event;
 					if (getmouse(&event) == OK) {
-						if (wenclose(ncentry->ncwin->overlay, event.y, event.x)){
+						if (wenclose(ncentry->ncwidget.ncwin->overlay, event.y, event.x)){
 							int x, y, h, w, i;
-							getbegyx(ncentry->ncwin->overlay, y, x);
-							getmaxyx(ncentry->ncwin->overlay, h, w);
+							getbegyx(ncentry->ncwidget.ncwin->overlay, y, x);
+							getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 							int width = w-2, height = h - 2;					
 							size_t len = ucharstrlen(ncentry->info);
 							if (event.bstate & BUTTON1_PRESSED){
@@ -385,7 +344,7 @@ void nc_entry_activate(
 								if (ncentry->position > len)
 									ncentry->position = len;
 
-								nc_enrty_refresh(ncentry);
+								nc_entry_refresh(ncwidget);
 								break;
 							} else if (event.bstate & MOUSE_SCROLL_UP){
 								if (!ncentry->multiline)
@@ -394,20 +353,20 @@ void nc_entry_activate(
 									ncentry->position -= width;
 								else
 									ncentry->position = 0;
-								nc_enrty_refresh(ncentry);
+								nc_entry_refresh(ncwidget);
 								break;
 							} else if (event.bstate & MOUSE_SCROLL_DOWN){
 								if (!ncentry->multiline)
 									break;
 								int h, w;
-								getmaxyx(ncentry->ncwin->overlay, h, w);
+								getmaxyx(ncentry->ncwidget.ncwin->overlay, h, w);
 								int width = w-2;
 								size_t len = ucharstrlen(ncentry->info);
 								if (ncentry->position + width < len)
 									ncentry->position += width;
 								else
 									ncentry->position = len;
-								nc_enrty_refresh(ncentry);
+								nc_entry_refresh(ncwidget);
 								break;
 							}
 						}
@@ -423,7 +382,7 @@ void nc_entry_activate(
 						break;
 					}
 					u8char_t u8ch;
-					u8ch.attr = COLOR_PAIR(ncentry->ncwin->color);
+					u8ch.attr = COLOR_PAIR(ncentry->ncwidget.ncwin->color);
 					if (c >= 252){/* 6-bytes */
 						u8ch.utf8[0] = c; 
 						u8ch.utf8[1] = getch(); 
@@ -464,10 +423,61 @@ void nc_entry_activate(
 						u8ch.utf8[1] = 0; 
 					} 
 					nc_entry_add_char(ncentry, u8ch);
-					nc_enrty_refresh(ncentry);
+					nc_entry_refresh(ncwidget);
 				}
 		}
 	}
+	nc_widget_set_focused(ncwidget, false);
+	nc_widget_refresh(ncwidget);
 }
 
+NcWidget *
+nc_entry_new(
+		NcWin *parent,
+		const char *title,
+		int h, int w, int y, int x,
+		int color,
+		const char *value,
+		bool multiline,
+		bool box,
+		bool shadow
+		)
+{
+	NcEntry *ncentry = malloc(sizeof(NcEntry));
+	if (!ncentry)
+		return NULL;
+	
+	ncentry->ncwidget.type = NcWidgetTypeEntry;
 
+	ncentry->ncwidget.ncwin = nc_win_new(parent, title, h, w, y, x, color, box, shadow);
+	if (!ncentry->ncwidget.ncwin){
+		free(ncentry);
+		return NULL;
+	}
+
+	ncentry->multiline= multiline;
+	ncentry->position = 0;
+	ncentry->ypos     = 0;
+	ncentry->xpos     = 0;
+	ncentry->ncwidget.focused  = 0;
+
+	if (value && strlen(value)){
+		ncentry->allocated = strlen(value) * sizeof(u8char_t);
+		nc_entry_set_value(ncentry, value);
+		//set position
+		ncentry->position = ucharstrlen(ncentry->info);
+	} else {
+		ncentry->allocated = BUFSIZ;
+		ncentry->info = malloc(BUFSIZ);
+		if (!ncentry->info)
+			return NULL;
+		ncentry->info[0].utf8[0] = 0;
+	} 
+
+	ncentry->ncwidget.on_refresh     = nc_entry_refresh;
+	ncentry->ncwidget.on_set_focused = nc_entry_set_focused;
+	ncentry->ncwidget.on_activate    = nc_entry_activate;
+	ncentry->ncwidget.on_destroy	   = nc_entry_destroy;
+
+	return (NcWidget*)ncentry;
+}

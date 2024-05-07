@@ -2,11 +2,11 @@
  * File              : ncwin.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 14.06.2023
+ * Last Modified Date: 08.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
-#include "ncwin.h"
+#include "stuctures.h"
 #include <curses.h>
 #include <ncurses.h>
 #include <panel.h>
@@ -14,7 +14,7 @@
 #include "colors.h"
 #include "utils.h"
 
-void nc_window_set_title(ncwin_t *ncwin, const char *title)
+void nc_win_set_title(NcWin *ncwin, const char *title)
 {
 	if (ncwin->title)
 		free(ncwin->title);
@@ -30,9 +30,9 @@ void nc_window_set_title(ncwin_t *ncwin, const char *title)
 	wrefresh(ncwin->overlay);
 }
 
-ncwin_t *
-nc_window_new(
-		PANEL *parent,
+NcWin *
+nc_win_new(
+		NcWin *parent,
 		const char *title, 
 		int h, int w, int y, int x, 
 		int color,
@@ -41,7 +41,7 @@ nc_window_new(
 {
 	int i;
 	
-	ncwin_t *ncwin = malloc(sizeof(ncwin_t));
+	NcWin *ncwin = malloc(sizeof(NcWin));
 	if (!ncwin)
 		return NULL;
 
@@ -51,10 +51,11 @@ nc_window_new(
 	ncwin->spanel = NULL;
 	ncwin->color  = color; 
 	ncwin->title  = NULL;
+	ncwin->box    = box;
 	
 	if (shadow){
 		if (parent){
-			ncwin->shadow = derwin(parent->win, h, w, y + 1, x + 2);	
+			ncwin->shadow = derwin(parent->panel->win, h, w, y + 1, x + 2);	
 		} else {
 			ncwin->shadow = newwin(h, w, y + 1, x + 2);	
 			ncwin->spanel = new_panel(ncwin->shadow);
@@ -64,7 +65,7 @@ nc_window_new(
 	}
 
 	if (parent)
-		ncwin->overlay = derwin(parent->win, h, w, y, x);
+		ncwin->overlay = derwin(parent->panel->win, h, w, y, x);
 	else
 		ncwin->overlay = newwin(h, w, y, x);
 	if (!ncwin->overlay){
@@ -77,7 +78,7 @@ nc_window_new(
 		box(ncwin->overlay, 0, 0);
 	
 	if (title){
-		nc_window_set_title(ncwin, title);
+		nc_win_set_title(ncwin, title);
 	}
 
 	if (!parent)
@@ -89,7 +90,7 @@ nc_window_new(
 	return ncwin;
 }
 
-int nc_window_move(ncwin_t *ncwin, int y, int x){
+int nc_win_move(NcWin *ncwin, int y, int x){
 	int ret;
 	if (ncwin->parent)
 		return -1;
@@ -105,7 +106,26 @@ int nc_window_move(ncwin_t *ncwin, int y, int x){
 	return ret;
 }
 
-int nc_window_hide(ncwin_t *ncwin)
+int nc_win_resize(NcWin *ncwin, int h, int w){
+	int ret;
+	if (ncwin->parent)
+		return -1;
+	
+	wresize(ncwin->overlay, h, w);
+	
+	if (ncwin->shadow)
+		wresize(ncwin->shadow, h, w);
+	
+	if (ncwin->box)
+		box(ncwin->overlay, 0, 0);
+
+	update_panels();
+	doupdate();
+
+	return ret;
+}
+
+int nc_win_hide(NcWin *ncwin)
 {
 	if (ncwin->parent)
 		return -1;
@@ -118,7 +138,7 @@ int nc_window_hide(ncwin_t *ncwin)
 	return ret;
 }
 
-int nc_window_show(ncwin_t *ncwin)
+int nc_win_show(NcWin *ncwin)
 {
 	if (ncwin->parent)
 		return -1;
@@ -131,7 +151,7 @@ int nc_window_show(ncwin_t *ncwin)
 	return ret;
 }
 
-bool nc_window_hidden(ncwin_t *ncwin)
+bool nc_win_hidden(NcWin *ncwin)
 {
 	if (ncwin->parent)
 		return false;
@@ -140,13 +160,13 @@ bool nc_window_hidden(ncwin_t *ncwin)
 }
 
 int 
-nc_window_activate(ncwin_t *ncwin)
+nc_win_activate(NcWin *ncwin)
 {
 	if (ncwin->parent)
 		return -1;
 	
-	if (nc_window_hidden(ncwin))
-		nc_window_show(ncwin);
+	if (nc_win_hidden(ncwin))
+		nc_win_show(ncwin);
 
 	if (ncwin->shadow)
 		top_panel(ncwin->spanel);
@@ -156,9 +176,9 @@ nc_window_activate(ncwin_t *ncwin)
 	return ret;	
 }
 
-void nc_window_destroy(ncwin_t *ncwin)
+void nc_win_destroy(NcWin *ncwin)
 {
-	PANEL *parent = ncwin->parent;
+	NcWin *parent = ncwin->parent;
 	werase(ncwin->overlay);
 	if (ncwin->shadow)
 		werase(ncwin->shadow);
@@ -169,7 +189,7 @@ void nc_window_destroy(ncwin_t *ncwin)
 	if (ncwin->title)
 		free(ncwin->title);
 	if (parent)
-		wrefresh(parent->win);
+		wrefresh(parent->panel->win);
 	update_panels();
 	doupdate();	
 }

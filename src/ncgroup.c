@@ -1,64 +1,56 @@
-/**
- * File              : ncscreen.c
- * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
- * Date              : 14.06.2023
- * Last Modified Date: 30.06.2023
- * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
- */
-
-#include "ncscreen.h"
-
+#include "ncwidgets.h"
+#include "keys.h"
 #include <curses.h>
 #include <ncurses.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include "keys.h"
-#include "types.h"
-#include "ncwin.h"
-#include "nclist.h"
-#include "nclabel.h"
-#include "ncbutton.h"
-#include "ncentry.h"
-#include "nccalendar.h"
-#include "ncselection.h"
 
-ncscreen_node_t *_nc_screen_node_new(enum SCREEN type, void *object)
+struct NcGroup{
+	struct NcGroup *next;
+	NcWidget *object;
+};
+
+NcGroup *nc_group_new()
 {
-	ncscreen_node_t *node = malloc(sizeof(ncscreen_node_t));
+	NcGroup *node = malloc(sizeof(NcGroup));
 	if (!node)
 		return NULL;
 
-	node->type     = type;
+	node->object   = NULL;
+	node->next     = NULL;
+	return node;
+}
+
+NcGroup *_nc_group_node_new(NcWidget *object)
+{
+	NcGroup *node = malloc(sizeof(NcGroup));
+	if (!node)
+		return NULL;
+
 	node->object   = object;
 	node->next     = NULL;
 	return node;
 }
 
-void nc_screen_add(
-		ncscreen_node_t **root, 
-		enum SCREEN type, 
-		void *object)
+void nc_group_add(
+		NcGroup *root, 
+		NcWidget *object)
 {
 	// get last node
-	ncscreen_node_t *ptr = *root;
+	NcGroup *ptr = root;
 	while (ptr && ptr->next)
 		ptr = ptr->next;	
 
 	// create node
-	ncscreen_node_t *node = _nc_screen_node_new(type, object);	
-	if (ptr)
-		ptr->next = node;
-	else
-		*root = node;
+	NcGroup *node = _nc_group_node_new(object);	
+	ptr->next = node;
 }
 
-void nc_screen_remove(
-		ncscreen_node_t **root, 
-		void *object)
+void nc_group_remove(
+		NcGroup *root, 
+		NcWidget *object)
 {
 	// get node
-	ncscreen_node_t *ptr  = *root;
-	ncscreen_node_t *prev = NULL;
+	NcGroup *ptr  = root;
+	NcGroup *prev = NULL;
 	while (ptr){
 		if (ptr->object == object){
 			prev->next = ptr->next;
@@ -70,19 +62,19 @@ void nc_screen_remove(
 	}
 }
 
-struct nc_screen_data {
-	ncscreen_node_t *root;
-	ncscreen_node_t *ptr;
+struct nc_group_data {
+	NcGroup *root;
+	NcGroup *ptr;
 	void *userdata;
-	CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key);
+	NCRET (*callback)(NcWidget *, void *, chtype);
 };
 
-CBRET nc_screen_cb(void *userdata, enum SCREEN type, void *object, chtype key)
+NCRET nc_group_cb(NcWidget *widget, void *userdata, chtype key)
 {
-	struct nc_screen_data *d = userdata;
+	struct nc_group_data *d = userdata;
 	if (d->callback){
-		CBRET ret = d->callback(d->userdata, type, object, key);
-			if (ret == CBBREAK)
+		NCRET ret = d->callback(widget, d->userdata, key);
+			if (ret == NCSTOP)
 				return ret;
 	}
 

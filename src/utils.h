@@ -2,7 +2,7 @@
  * File              : utils.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 30.06.2023
+ * Last Modified Date: 07.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -137,7 +137,7 @@ static u8char_t *
 str2ucharstr(const char *str, int color)
 {
 	size_t len = strlen(str);
-	u8char_t *ucharstr = malloc(len * sizeof(u8char_t));
+	u8char_t *ucharstr = malloc(len * sizeof(u8char_t) + 1);
 	if (!ucharstr)
 		return NULL;
 
