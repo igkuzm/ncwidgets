@@ -6,7 +6,7 @@
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
-#include "stuctures.h"
+#include "struct.h"
 #include <curses.h>
 #include <ncurses.h>
 #include <panel.h>

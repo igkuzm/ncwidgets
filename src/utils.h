@@ -2,7 +2,7 @@
  * File              : utils.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 07.05.2024
+ * Last Modified Date: 08.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -14,9 +14,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 static void
-_buf2attr(attr_t *attr, char *str, int add)
+_buf2attr(attr_t *attr, char *str, int add, int defcolor)
 {
 	char buf[32];
 	int i = 0, l = 0;
@@ -36,8 +37,8 @@ _buf2attr(attr_t *attr, char *str, int add)
 					*attr &= ~A_UNDERLINE;
 				break;
 
-			case 0: case 1: case 2: case 3: case 4:
-			case 5: case 6: case 7: case 8: case 9:
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
 				buf[l++] = c;
 				break;
 
@@ -49,49 +50,53 @@ _buf2attr(attr_t *attr, char *str, int add)
 	
 	int color = atoi(buf);
 	if (color){
-		if (add)
+		if (add){
+			*attr &= ~COLOR_PAIR(defcolor);
 			*attr |= COLOR_PAIR(color);
-		else
-			*attr &= ~COLOR_PAIR(color);
-	}
-}
-
-static chtype  *
-str2chtypestr(const char *str, int color)
-{
-	size_t len = strlen(str);
-	chtype *chtypestr = malloc(len * sizeof(chtype));
-	if (!chtypestr)
-		return NULL;
-
-	size_t i, l = 0; 
-	attr_t attr = A_NORMAL|COLOR_PAIR(color);
-	char buf[32];
-	int buflen = 0;
-	for (i = 0; i < len; ++i) {
-		if (str[i] == '<'){
-			if (str[i+1] == '/' || str[i+1] == '!'){
-				// start of attributes
-				int add = 1;
-				if (str[i+1] == '!')
-					add = 0;
-				i+=2;
-				while (str[i] != '>') {
-					buf[buflen++] = str[i++];
-				}
-				buf[buflen++] = 0;
-				_buf2attr(&attr, buf, add);
-				i++;
-				buflen = 0;
-			}
 		}
-
-		chtype c = (int)str[i] | attr;
-		chtypestr[l++] = c;
+		else{
+			*attr &= ~COLOR_PAIR(color);
+			*attr |= COLOR_PAIR(defcolor);
+		}
 	}
-	chtypestr[l++] = 0;
-	return chtypestr;
 }
+
+/*static chtype  **/
+/*str2chtypestr(const char *str, int color)*/
+/*{*/
+	/*size_t len = strlen(str);*/
+	/*chtype *chtypestr = malloc(len * sizeof(chtype));*/
+	/*if (!chtypestr)*/
+		/*return NULL;*/
+
+	/*size_t i, l = 0; */
+	/*attr_t attr = A_NORMAL|COLOR_PAIR(color);*/
+	/*char buf[32];*/
+	/*int buflen = 0;*/
+	/*for (i = 0; i < len; ++i) {*/
+		/*if (str[i] == '<'){*/
+			/*if (str[i+1] == '/' || str[i+1] == '!'){*/
+				/*// start of attributes*/
+				/*int add = 1;*/
+				/*if (str[i+1] == '!')*/
+					/*add = 0;*/
+				/*i+=2;*/
+				/*while (str[i] != '>') {*/
+					/*buf[buflen++] = str[i++];*/
+				/*}*/
+				/*buf[buflen++] = 0;*/
+				/*_buf2attr(&attr, buf, add);*/
+				/*i++;*/
+				/*buflen = 0;*/
+			/*}*/
+		/*}*/
+
+		/*chtype c = (int)str[i] | attr;*/
+		/*chtypestr[l++] = c;*/
+	/*}*/
+	/*chtypestr[l++] = 0;*/
+	/*return chtypestr;*/
+/*}*/
 
 typedef struct {
 	char utf8[7];
@@ -157,7 +162,7 @@ str2ucharstr(const char *str, int color)
 					buf[buflen++] = str[i++];
 				}
 				buf[buflen++] = 0;
-				_buf2attr(&attr, buf, add);
+				_buf2attr(&attr, buf, add, color);
 				i++;
 				buflen = 0;
 			}
@@ -284,6 +289,19 @@ reverse_chtypestr(chtype **chtypestr){
 		chtypestr[0][i] = chtypestr[0][i] | A_REVERSE;
 		i++;	
 	}
+}
+
+static int 
+utf8strlen(const char *str){
+	int len = 0;
+	char *s = (char *)str;
+	wchar_t pwc;
+	while(*s){
+		int ret = mbrtowc(&pwc, s, MB_CUR_MAX, NULL);
+		len ++;
+		s += ret;
+	}
+	return len;
 }
 
 #endif /* ifndef NC_UTILS_H */

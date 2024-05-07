@@ -6,11 +6,13 @@
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
-#include "stuctures.h"
+#include "ncwidgets.h"
+#include "struct.h"
 #include "keys.h"
 #include "utils.h"
 #include <ncurses.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 const char * nc_calendar_dnames[] = 
@@ -31,7 +33,7 @@ const char * nc_calendar_dnames[] =
 void nc_calendar_refresh(NcWidget *ncwidget)
 {
 	NcCalendar *nccalendar = (NcCalendar *)ncwidget;
-	attr_t attr = COLOR_PAIR(nccalendar->ncwidget.ncwin->color);
+	attr_t attr = COLOR_PAIR(nccalendar->ncwidget.ncwin.color);
 
 	// set date
 	struct tm *tm = nccalendar->tm;
@@ -40,12 +42,12 @@ void nc_calendar_refresh(NcWidget *ncwidget)
 	mktime(tm);
 	
 	int i, h, w, y, x;
-	getmaxyx(nccalendar->ncwidget.ncwin->overlay, h, w);
+	getmaxyx(nccalendar->ncwidget.ncwin.overlay, h, w);
 
 	// fill with blank 
 	for (y = 0; y < h - 2; ++y)
 		for (x = 0; x < w - 2; x++)
-			mvwaddch(nccalendar->ncwidget.ncwin->overlay, y+1, x+1, ' ');
+			mvwaddch(nccalendar->ncwidget.ncwin.overlay, y+1, x+1, ' ');
 	
 	// print month name
 	char mname[16];
@@ -57,23 +59,23 @@ void nc_calendar_refresh(NcWidget *ncwidget)
 	int start = w/2 - len/2;
 
 	if (ncwidget->focused && nccalendar->selected == nccalendar_selected_month)
-		wattron (nccalendar->ncwidget.ncwin->overlay, attr | A_REVERSE);
-	mvwaddstr(nccalendar->ncwidget.ncwin->overlay, 1, start, mname);
+		wattron (nccalendar->ncwidget.ncwin.overlay, attr | A_REVERSE);
+	mvwaddstr(nccalendar->ncwidget.ncwin.overlay, 1, start, mname);
 	if (ncwidget->focused && nccalendar->selected == nccalendar_selected_month)
-		wattroff(nccalendar->ncwidget.ncwin->overlay, attr | A_REVERSE);
+		wattroff(nccalendar->ncwidget.ncwin.overlay, attr | A_REVERSE);
 	
 	// print year
-	waddch(nccalendar->ncwidget.ncwin->overlay, ' ');
+	waddch(nccalendar->ncwidget.ncwin.overlay, ' ');
 	char year[5];
 	sprintf(year, "%d", tm->tm_year + 1900);
 	if (ncwidget->focused && nccalendar->selected == nccalendar_selected_year)
-		wattron (nccalendar->ncwidget.ncwin->overlay, attr | A_REVERSE);
-	waddstr(nccalendar->ncwidget.ncwin->overlay, year);
+		wattron (nccalendar->ncwidget.ncwin.overlay, attr | A_REVERSE);
+	waddstr(nccalendar->ncwidget.ncwin.overlay, year);
 	if (ncwidget->focused && nccalendar->selected == nccalendar_selected_year)
-		wattroff(nccalendar->ncwidget.ncwin->overlay, attr | A_REVERSE);
+		wattroff(nccalendar->ncwidget.ncwin.overlay, attr | A_REVERSE);
 	 
 	// print week names
-	wmove(nccalendar->ncwidget.ncwin->overlay, 2, 1);		
+	wmove(nccalendar->ncwidget.ncwin.overlay, 2, 1);		
 	struct tm tw = *tm;
 	for (i = 0; i < 7; i++){
 		tw.tm_wday = nccalendar->startofweek + i;
@@ -85,9 +87,9 @@ void nc_calendar_refresh(NcWidget *ncwidget)
 		int index = uchar_index(wname, 2);
 		wname[index] = 0;
 
-		waddstr(nccalendar->ncwidget.ncwin->overlay, wname);
+		waddstr(nccalendar->ncwidget.ncwin.overlay, wname);
 		if (i < 6)
-			waddch(nccalendar->ncwidget.ncwin->overlay, ' ');
+			waddch(nccalendar->ncwidget.ncwin.overlay, ' ');
 	}
 
 	// fill with dates
@@ -103,25 +105,25 @@ void nc_calendar_refresh(NcWidget *ncwidget)
 		if (ncwidget->focused 
 				&& nccalendar->selected == nccalendar_selected_day 
 				&& tp.tm_mday == tm->tm_mday)		
-			wattron (nccalendar->ncwidget.ncwin->overlay, attr | A_REVERSE);
-		mvwaddstr(nccalendar->ncwidget.ncwin->overlay, y, x, nc_calendar_dnames[tp.tm_mday]);
+			wattron (nccalendar->ncwidget.ncwin.overlay, attr | A_REVERSE);
+		mvwaddstr(nccalendar->ncwidget.ncwin.overlay, y, x, nc_calendar_dnames[tp.tm_mday]);
 		if (ncwidget->focused 
 				&& nccalendar->selected == nccalendar_selected_day 
 				&& tp.tm_mday == tm->tm_mday)		
-			wattroff(nccalendar->ncwidget.ncwin->overlay, attr | A_REVERSE);		
+			wattroff(nccalendar->ncwidget.ncwin.overlay, attr | A_REVERSE);		
 		if (++i == 7){
 			i = 0;
 			y++;	
 		}
 	}
 
-	wrefresh(nccalendar->ncwidget.ncwin->overlay);
+	wrefresh(nccalendar->ncwidget.ncwin.overlay);
 }
 
 void nc_calendar_set_focused(NcWidget *ncwidget, bool focused)
 {
 	ncwidget->focused  = focused;
-	nc_win_activate(ncwidget->ncwin);
+	nc_win_activate(&ncwidget->ncwin);
 	nc_calendar_refresh(ncwidget);
 }
 
@@ -222,10 +224,10 @@ void nc_calendar_activate(
 				{
 					MEVENT event;
 					if (getmouse(&event) == OK) {
-						if (wenclose(nccalendar->ncwidget.ncwin->overlay, event.y, event.x)){
+						if (wenclose(nccalendar->ncwidget.ncwin.overlay, event.y, event.x)){
 							int x, y, h, w, i;
-							getbegyx(nccalendar->ncwidget.ncwin->overlay, y, x);
-							getmaxyx(nccalendar->ncwidget.ncwin->overlay, h, w);
+							getbegyx(nccalendar->ncwidget.ncwin.overlay, y, x);
+							getmaxyx(nccalendar->ncwidget.ncwin.overlay, h, w);
 							int selectedRow    = event.y - y;
 							int selectedColumn = event.x - x;
 							if (event.bstate & BUTTON1_PRESSED){
@@ -317,7 +319,7 @@ void nc_calendar_activate(
 
 void nc_calendar_destroy(NcWidget *ncwidget)
 {
-	nc_win_destroy(ncwidget->ncwin);
+	nc_win_destroy(&ncwidget->ncwin);
 	free(ncwidget);
 }
 
@@ -334,17 +336,16 @@ nc_calendar_new(
 		)
 {
 	int h = 10, w = 22;
-	NcCalendar *nccalendar = malloc(sizeof(NcCalendar));
+	NcCalendar *nccalendar  = 
+		(NcCalendar *)nc_win_new(parent, title, h, w, y, x, color, box, shadow);
+	if (!nccalendar)
+		return NULL;
+
+	nccalendar = realloc(nccalendar, sizeof(NcCalendar));
 	if (!nccalendar)
 		return NULL;
 	
 	nccalendar->ncwidget.type = NcWidgetTypeCalendar;
-
-	nccalendar->ncwidget.ncwin = nc_win_new(parent, title, h, w, y, x, color, box, shadow);
-	if (!nccalendar->ncwidget.ncwin){
-		free(nccalendar);
-		return NULL;
-	}
 
 	nccalendar->tm = localtime(&time);
 

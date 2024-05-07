@@ -1,5 +1,5 @@
 /**
- * File              : button.c
+ * File              : ncbutton.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
  * Last Modified Date: 08.05.2024
@@ -7,7 +7,7 @@
  */
 
 #include "ncwidgets.h"
-#include "stuctures.h"
+#include "struct.h"
 #include "keys.h"
 
 void nc_button_activate(
@@ -37,7 +37,7 @@ void nc_button_activate(
 				{
 					MEVENT event;
 					if (getmouse(&event) == OK) {
-						if (wenclose(ncbutton->ncwidget.ncwin->overlay, event.y, event.x)){
+						if (wenclose(ncbutton->ncwidget.ncwin.overlay, event.y, event.x)){
 							if (event.bstate & BUTTON1_PRESSED){
 								if (callback)
 									if(callback(ncwidget, userdata, KEY_RETURN))
@@ -72,7 +72,7 @@ NcWidget * nc_button_new(
 	ncbutton->type = NcWidgetTypeButton;
 	ncbutton->on_activate = nc_button_activate;
 
-	nc_win_resize(ncbutton->ncwin, h, w);
+	nc_win_resize(&ncbutton->ncwin, h, w);
 
 	nc_widget_refresh(ncbutton);
 	

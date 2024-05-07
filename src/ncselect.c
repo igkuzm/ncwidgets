@@ -1,5 +1,5 @@
 /**
- * File              : select.c
+ * File              : ncselect.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 08.05.2024
  * Last Modified Date: 08.05.2024
@@ -7,7 +7,7 @@
  */
 #include "colors.h"
 #include "ncwidgets.h"
-#include "stuctures.h"
+#include "struct.h"
 #include "fm.h"
 #include <dirent.h>
 #include <stdio.h>
@@ -78,7 +78,7 @@ void nc_selection_set_value(NcSelection *s, int size, char **value)
 		strcpy(str, s->selections[s->selected[i]]);
 		strcat(str, value[i]);
 	
-		s->nclist.info[i] = str2ucharstr(str, s->nclist.ncwidget.ncwin->color);
+		s->nclist.info[i] = str2ucharstr(str, s->nclist.ncwidget.ncwin.color);
 
 		free(str);
 	}

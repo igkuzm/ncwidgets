@@ -1,3 +1,10 @@
+/**
+ * File              : struct.h
+ * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
+ * Date              : 08.05.2024
+ * Last Modified Date: 08.05.2024
+ * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
+ */
 #ifndef NCWIDGETS_STRUCTURES_H
 #define NCWIDGETS_STRUCTURES_H
 
@@ -16,7 +23,7 @@ struct NcWin {
 };
 
 struct NcWidget {
-	NcWin *ncwin;
+	NcWin ncwin;
 	NcWidgetType type;
 	bool focused;
 	void (*on_refresh)(NcWidget *widget);
@@ -27,6 +34,8 @@ struct NcWidget {
 		NCRET callback(NcWidget *widget, void *userdata, chtype ch)
 		);
 	void (*on_destroy)(NcWidget *widget);
+	int key;
+	void *userdata;
 };
 
 enum nccalendar_selected{
@@ -104,5 +113,9 @@ struct NcSelection {
 	void *userdata;
 };
 
-#endif /* ifndef NCWIDGETS_STRUCTURES_H
- */
+struct NcGroup{
+	struct NcGroup *next;
+	NcWidget *object;
+};
+
+#endif /* ifndef NCWIDGETS_STRUCTURES_H */

@@ -210,4 +210,10 @@ void nc_group_activate(
 		NCRET callback(NcWidget *widget, void *userdata, chtype ch)
 		);
 
+int nc_dialog(
+		int color,
+		const char *title,
+		const char *msg, 
+		const char *buttons[], int count);
+
 #endif /* ifndef NC_WIDGETS_H */

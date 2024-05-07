@@ -1,15 +1,18 @@
 noinst_LIBRARIES = libncwidgets.a
 
 libncwidgets_a_SOURCES = \
-		colors.h keys.h utils.h \
-		ncwidgets.h   ncwidgets.c \
+		colors.h keys.h utils.h ncwidgets.h \
+		ncwidget.c \
 		nccalendar.c \
 		ncentry.c \
-		label.c \
-		button.c \
+		nclabel.c \
+		ncbutton.c \
 		nclist.c \
-		fselect.c \
-		select.c \
+		ncfselect.c \
+		ncselect.c \
+		ncinit.c \
+		ncgroup.c \
+		dialog.c \
 		ncwin.c
 
 libncwidgets_a_CFLAGS = @CURSES_CFLAGS@

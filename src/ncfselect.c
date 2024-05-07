@@ -1,6 +1,13 @@
+/**
+ * File              : ncfselect.c
+ * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
+ * Date              : 08.05.2024
+ * Last Modified Date: 08.05.2024
+ * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
+ */
 #include "colors.h"
 #include "ncwidgets.h"
-#include "stuctures.h"
+#include "struct.h"
 #include "fm.h"
 #include <dirent.h>
 #include <stdio.h>

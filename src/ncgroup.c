@@ -1,23 +1,15 @@
+/**
+ * File              : ncgroup.c
+ * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
+ * Date              : 08.05.2024
+ * Last Modified Date: 08.05.2024
+ * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
+ */
 #include "ncwidgets.h"
+#include "struct.h"
 #include "keys.h"
 #include <curses.h>
 #include <ncurses.h>
-
-struct NcGroup{
-	struct NcGroup *next;
-	NcWidget *object;
-};
-
-NcGroup *nc_group_new()
-{
-	NcGroup *node = malloc(sizeof(NcGroup));
-	if (!node)
-		return NULL;
-
-	node->object   = NULL;
-	node->next     = NULL;
-	return node;
-}
 
 NcGroup *_nc_group_node_new(NcWidget *object)
 {
@@ -30,10 +22,21 @@ NcGroup *_nc_group_node_new(NcWidget *object)
 	return node;
 }
 
+NcGroup *nc_group_new()
+{
+	return _nc_group_node_new(NULL);
+}
+
 void nc_group_add(
 		NcGroup *root, 
 		NcWidget *object)
 {
+	// if first 
+	if (root && root->object == NULL){
+		root->object = object;
+		return;
+	}
+
 	// get last node
 	NcGroup *ptr = root;
 	while (ptr && ptr->next)
@@ -69,7 +72,8 @@ struct nc_group_data {
 	NCRET (*callback)(NcWidget *, void *, chtype);
 };
 
-NCRET nc_group_cb(NcWidget *widget, void *userdata, chtype key)
+NCRET 
+nc_group_cb(NcWidget *widget, void *userdata, chtype key)
 {
 	struct nc_group_data *d = userdata;
 	if (d->callback){
@@ -83,85 +87,64 @@ NCRET nc_group_cb(NcWidget *widget, void *userdata, chtype key)
 		// next object
 		case KEY_TAB:
 			{
-				switch (d->ptr->type) {
-#define NCSCREEN(title)\
-					case SCREEN_##title:\
-						   nc_set_focused_##title((struct title *)(d->ptr->object),\
-								   false);\
-					break;
-	NCSCREENS
-				}
-#undef NCSCREEN					
+				nc_widget_set_focused(d->ptr->object, 
+						false);
 				if (d->ptr->next)
 					d->ptr = d->ptr->next;
 				else
 					d->ptr = d->root;
-
-				switch (d->ptr->type) {
-#define NCSCREEN(title)\
-					case SCREEN_##title:\
-						nc_activate_##title((struct title *)(d->ptr->object),\
-								d, nc_screen_cb);\
-						return 1;
-	NCSCREENS
-					}
-#undef NCSCREEN					
-				break;
+				nc_widget_activate(d->ptr->object, 
+						d, nc_group_cb);
+				return NCSTOP;
 			}
 		case KEY_MOUSE:
 			{
 				MEVENT event;
 				if (getmouse(&event) == OK) {
 					if (event.bstate & BUTTON1_PRESSED){
-						ncwin_t *win = NULL;
-						switch (d->ptr->type) {
-#define NCSCREEN(title)\
-							case SCREEN_##title:{\
-								win = ((struct title *)(d->ptr->object))->ncwin;\
-								if (!wenclose(win->overlay, event.y, event.x)){\
-									ncscreen_node_t *prev = d->ptr;\
-									nc_set_focused_##title((struct title *)(d->ptr->object),\
-											false);\
-									d->ptr = d->root;\
-									while(d->ptr){\
-										win = ((struct title *)(d->ptr->object))->ncwin;\
-										if (wenclose(win->overlay,\
-													event.y, event.x)){\
-											nc_activate_##title((struct title *)(d->ptr->object),\
-												d, nc_screen_cb);\
-											return 1;\
-										}\
-										d->ptr = d->ptr->next;\
-									}\
-									d->ptr = prev;\
-									nc_activate_##title((struct title *)(d->ptr->object),\
-										d, nc_screen_cb);\
-									return 1;\
-								}\
-							}\
-							break;
-NCSCREENS
-#undef NCSCREEN
-							}						
+						NcWin *win = NULL;
+						win = &d->ptr->object->ncwin;
+						if (!wenclose(win->overlay, event.y, event.x))
+						{
+							NcGroup *prev = d->ptr;
+							nc_widget_set_focused(d->ptr->object, 
+									false);
+							d->ptr = d->root;
+							while(d->ptr){
+								win = &d->ptr->object->ncwin;
+								if (wenclose(win->overlay,
+											event.y, event.x))
+								{
+									nc_widget_activate(d->ptr->object,
+										 	d, nc_group_cb);
+									return NCSTOP;
+								}
+								d->ptr = d->ptr->next;
+							}
+							d->ptr = prev;
+							nc_widget_activate(d->ptr->object,
+									d, nc_group_cb);
+							return NCSTOP;
 						}
-					ungetmouse(&event);
+						break;
 					}
+					ungetmouse(&event);
 				}
-				break;
+			}
+			break;
 	}				
-	return 0;
+	return NCNONE;
 }
 
-
-void nc_screen_activate(
-		ncscreen_node_t *root,
-		void *selected,
+void nc_group_activate(
+		NcGroup *root,
+		NcWidget *selected,
 		void *userdata,
-		CBRET (*callback)(void *userdata, enum SCREEN type, void *object, chtype key)
+		NCRET (*callback)(NcWidget *, void *, chtype)
 		)
 {
 	// ptr is selected object in screen
-	ncscreen_node_t *ptr = root;
+	NcGroup *ptr = root;
 	if (selected){
 		while (ptr->next){
 			if (ptr->object == selected)
@@ -169,15 +152,10 @@ void nc_screen_activate(
 			ptr = ptr->next;
 		} 
 	}
-	struct nc_screen_data d = {root, ptr, userdata, callback};
+	struct nc_group_data d = 
+	{root, ptr, userdata,
+	 	callback};
 
-	switch (ptr->type) {
-#define NCSCREEN(title)\
-		case SCREEN_##title:\
-			nc_activate_##title((struct title *)(ptr->object),\
-					&d, nc_screen_cb);\
-			break;
-	NCSCREENS
-#undef NCSCREEN					
-	}
+	nc_widget_activate(ptr->object, 
+			&d, nc_group_cb);
 }

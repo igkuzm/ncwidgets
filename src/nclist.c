@@ -7,7 +7,7 @@
  */
 
 #include "ncwidgets.h"
-#include "stuctures.h"
+#include "struct.h"
 #include "utils.h"
 #include "keys.h"
 #include "types.h"
@@ -23,7 +23,7 @@ void nc_list_refresh(NcWidget *ncwidget)
 	NcList *nclist = (NcList*)ncwidget;
 
 	int h, w, y, x;
-	getmaxyx(nclist->ncwidget.ncwin->overlay, h, w);
+	getmaxyx(nclist->ncwidget.ncwin.overlay, h, w);
 
 	if (nclist->selected < 0)
 		nclist->selected = 0;
@@ -39,13 +39,13 @@ void nc_list_refresh(NcWidget *ncwidget)
 	for (y = 0; y < h - 2; ++y)
 		for (x = 0; x < w - 2; x++)
 			if (y + nclist->ypos == nclist->selected && ncwidget->focused)
-				mvwaddch(nclist->ncwidget.ncwin->overlay, y+1, x+1, ' '|A_REVERSE);
+				mvwaddch(nclist->ncwidget.ncwin.overlay, y+1, x+1, ' '|A_REVERSE);
 			else		
-				mvwaddch(nclist->ncwidget.ncwin->overlay, y+1, x+1, ' ');
+				mvwaddch(nclist->ncwidget.ncwin.overlay, y+1, x+1, ' ');
 	
 	//fill with data
 	for (y = 0; y < h - 2 && y < nclist->size; ++y) {
-		wmove(nclist->ncwidget.ncwin->overlay, y + 1, 1);		
+		wmove(nclist->ncwidget.ncwin.overlay, y + 1, 1);		
 		u8char_t *str = nclist->info[y + nclist->ypos]; 
 		
 		if (y + nclist->ypos == nclist->selected && ncwidget->focused){
@@ -55,22 +55,22 @@ void nc_list_refresh(NcWidget *ncwidget)
 			for (x = 0; x < w - 2 && str[x].utf8[0]; ++x) {
 				if (str[x].utf8[0] == '\n') str[x].utf8[0] = ' ';
 				if (str[x].utf8[0] == '\r') str[x].utf8[0] = ' ';
-				wattron(nclist->ncwidget.ncwin->overlay, str[x].attr | A_REVERSE);
-				waddstr(nclist->ncwidget.ncwin->overlay, str[x].utf8);	
-				wattroff(nclist->ncwidget.ncwin->overlay, str[x].attr| A_REVERSE);
+				wattron(nclist->ncwidget.ncwin.overlay, str[x].attr | A_REVERSE);
+				waddstr(nclist->ncwidget.ncwin.overlay, str[x].utf8);	
+				wattroff(nclist->ncwidget.ncwin.overlay, str[x].attr| A_REVERSE);
 			}
 		} else {
 			for (x = 0; x < w - 2 && str[x].utf8[0]; ++x) {
 				if (str[x].utf8[0] == '\n') str[x].utf8[0] = ' ';
 				if (str[x].utf8[0] == '\r') str[x].utf8[0] = ' ';
-				wattron(nclist->ncwidget.ncwin->overlay, str[x].attr);
-				waddstr(nclist->ncwidget.ncwin->overlay, str[x].utf8);	
-				wattroff(nclist->ncwidget.ncwin->overlay, str[x].attr);
+				wattron(nclist->ncwidget.ncwin.overlay, str[x].attr);
+				waddstr(nclist->ncwidget.ncwin.overlay, str[x].utf8);	
+				wattroff(nclist->ncwidget.ncwin.overlay, str[x].attr);
 			}
 		}
 	}
 
-	wrefresh(nclist->ncwidget.ncwin->overlay);
+	wrefresh(nclist->ncwidget.ncwin.overlay);
 }
 
 void nc_list_set_value(NcList *nclist, char **value, int size)
@@ -89,7 +89,7 @@ void _nc_list_set_value(NcList *nclist, char **value, int size)
 	/* copy values */
 	int i;
 	for (i = 0; i < nclist->size; ++i) {
-		nclist->info[i] = str2ucharstr(value[i], nclist->ncwidget.ncwin->color);
+		nclist->info[i] = str2ucharstr(value[i], nclist->ncwidget.ncwin.color);
 	}
 
 	nc_list_refresh((NcWidget*)nclist);
@@ -107,7 +107,7 @@ int nc_list_get_selected(NcList *nclist){
 void nc_list_set_focused(NcWidget *ncwidget, bool focused)
 {
 	ncwidget->focused = focused;
-	nc_win_activate(ncwidget->ncwin);
+	nc_win_activate(&ncwidget->ncwin);
 	nc_list_refresh(ncwidget);
 }
 
@@ -141,7 +141,7 @@ void nc_list_activate(
 					str = &str[nclist->xpos];
 					int len = ucharstrlen(str); 
 					int h, w;
-					getmaxyx(nclist->ncwidget.ncwin->overlay, h, w);					
+					getmaxyx(nclist->ncwidget.ncwin.overlay, h, w);					
 					if (len < w - 1){
 						beep();
 						break;
@@ -184,7 +184,7 @@ void nc_list_activate(
 				{
 					nclist->xpos = 0;
 					int h, w;
-					getmaxyx(nclist->ncwidget.ncwin->overlay, h, w);				
+					getmaxyx(nclist->ncwidget.ncwin.overlay, h, w);				
 					int conent_h = h-2;
 					nclist->selected += conent_h;
 					if (nclist->selected >= nclist->size){
@@ -199,7 +199,7 @@ void nc_list_activate(
 				{
 					nclist->xpos = 0;
 					int h, w;
-					getmaxyx(nclist->ncwidget.ncwin->overlay, h, w);				
+					getmaxyx(nclist->ncwidget.ncwin.overlay, h, w);				
 					int conent_h = h-2;
 					nclist->selected -= conent_h;
 					if (nclist->selected < 0){
@@ -214,10 +214,10 @@ void nc_list_activate(
 				{
 					MEVENT event;
 					if (getmouse(&event) == OK) {
-						if (wenclose(nclist->ncwidget.ncwin->overlay, event.y, event.x)){
+						if (wenclose(nclist->ncwidget.ncwin.overlay, event.y, event.x)){
 							int x, y, h, w, i;
-							getbegyx(nclist->ncwidget.ncwin->overlay, y, x);
-							getmaxyx(nclist->ncwidget.ncwin->overlay, h, w);
+							getbegyx(nclist->ncwidget.ncwin.overlay, y, x);
+							getmaxyx(nclist->ncwidget.ncwin.overlay, h, w);
 							if (event.bstate & BUTTON1_PRESSED){
 								int selectedRow = event.y - y - 1;
 								if (nclist->selected == selectedRow){
@@ -269,7 +269,7 @@ void nc_list_activate(
 void nc_list_destroy(NcWidget *ncwidget)
 {
 	NcList *nclist = (NcList*)ncwidget;
-	nc_win_destroy(ncwidget->ncwin);
+	nc_win_destroy(&ncwidget->ncwin);
 	int i;
 	for (i = 0; i < nclist->size; ++i) {
 		free(nclist->info[i]);
@@ -289,24 +289,22 @@ NcWidget * nc_list_new(
 		bool shadow
 		)
 {
-	NcList *nclist = malloc(sizeof(NcList));
+	NcList *nclist =  
+		(NcList *)nc_win_new(parent, title, h, w, y, x, color, box, shadow);
+	if (!nclist)
+		return NULL;
+
+	nclist = realloc(nclist, sizeof(NcList));
 	if (!nclist)
 		return NULL;
 	
 	nclist->ncwidget.type = NcWidgetTypeList;
-
-	nclist->ncwidget.ncwin = nc_win_new(parent, title, h, w, y, x, color, box, shadow);
-	if (!nclist->ncwidget.ncwin){
-		free(nclist);
-		return NULL;
-	}
 
 	nclist->selected = 0;
 	nclist->ypos     = 0;
 	nclist->xpos     = 0;
 	nclist->ncwidget.focused  = 0;
 
-	
 	nclist->ncwidget.on_refresh     = nc_list_refresh;
 	nclist->ncwidget.on_set_focused = nc_list_set_focused;
 	nclist->ncwidget.on_activate    = nc_list_activate;
@@ -318,5 +316,3 @@ NcWidget * nc_list_new(
 
 	return (NcWidget*)nclist;
 }
-
-
