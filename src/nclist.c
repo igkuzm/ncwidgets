@@ -2,7 +2,7 @@
  * File              : nclist.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -10,7 +10,6 @@
 #include "struct.h"
 #include "utils.h"
 #include "keys.h"
-#include "types.h"
 #include "fm.h"
 
 #include <curses.h>
@@ -29,16 +28,19 @@ void nc_list_refresh(NcWidget *ncwidget)
 		nclist->selected = 0;
 
 	//scroll to selected
-	while (nclist->selected > h-2 + nclist->ypos - 2 && nclist->selected + 1 < nclist->size)
+	while (nclist->selected > h-2 + nclist->ypos - 2 && 
+			nclist->selected + 1 < nclist->size)
 		nclist->ypos++;
 
-	while (nclist->selected < nclist->ypos + 1 && nclist->selected > 0)
+	while (nclist->selected < nclist->ypos + 1 
+			&& nclist->selected > 0)
 		nclist->ypos--;
 
 	// fill with blank 
 	for (y = 0; y < h - 2; ++y)
 		for (x = 0; x < w - 2; x++)
-			if (y + nclist->ypos == nclist->selected && ncwidget->focused)
+			if (y + nclist->ypos == nclist->selected 
+					&& ncwidget->focused)
 				mvwaddch(nclist->ncwidget.ncwin.overlay, y+1, x+1, ' '|A_REVERSE);
 			else		
 				mvwaddch(nclist->ncwidget.ncwin.overlay, y+1, x+1, ' ');
@@ -48,7 +50,8 @@ void nc_list_refresh(NcWidget *ncwidget)
 		wmove(nclist->ncwidget.ncwin.overlay, y + 1, 1);		
 		u8char_t *str = nclist->info[y + nclist->ypos]; 
 		
-		if (y + nclist->ypos == nclist->selected && ncwidget->focused){
+		if (y + nclist->ypos == nclist->selected && 
+				ncwidget->focused){
 			// move chars for xpos
 			str = &str[nclist->xpos];
 
@@ -89,7 +92,8 @@ void _nc_list_set_value(NcList *nclist, char **value, int size)
 	/* copy values */
 	int i;
 	for (i = 0; i < nclist->size; ++i) {
-		nclist->info[i] = str2ucharstr(value[i], nclist->ncwidget.ncwin.color);
+		nclist->info[i] = 
+			str2ucharstr(value[i], nclist->ncwidget.ncwin.color);
 	}
 
 	nc_list_refresh((NcWidget*)nclist);

@@ -2,7 +2,7 @@
  * File              : ncwidgets.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -135,7 +135,6 @@ size_t nc_entry_get_position(NcEntry *ncentry);
 typedef struct NcFselect NcFselect;
 NcWidget *nc_fselect_new(
 		NcWin *parent, 
-		const char *title, 
 		int h, int w, int y, int x, 
 		int color, 
 		const char *path,
@@ -148,7 +147,7 @@ NcWidget *nc_fselect_new(
 		);
 
 void nc_fselect_set(NcFselect *fselect, const char *path);
-const struct dirent * nc_fselect_get(NcFselect *fselect);
+char * nc_fselect_get(NcFselect *fselect);
 
 /* list/menu widget */
 typedef struct NcList NcList;

@@ -2,7 +2,7 @@
  * File              : ncwin.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -16,11 +16,24 @@
 
 void nc_win_set_title(NcWin *ncwin, const char *title)
 {
+	int i;
 	if (ncwin->title)
 		free(ncwin->title);
+
+	// fill with blank chars first
+	wattron (ncwin->overlay, COLOR_PAIR(ncwin->color));
+	for (i = 0; i < ncwin->overlay->_maxx-ncwin->overlay->_begx; ++i) 
+		waddch(ncwin->overlay, ' ');	
+	wattroff(ncwin->overlay, COLOR_PAIR(ncwin->color));
+
+	// make box
+	if (ncwin->box)
+		box(ncwin->overlay, 0, 0);
+
+	// make title
 	ncwin->title = str2ucharstr(title, ncwin->color); 
 	wmove(ncwin->overlay, 0, 1);
-	int i = 0;
+	i = 0;
 	while (ncwin->title[i].utf8[0]){
 		wattron (ncwin->overlay, ncwin->title[i].attr);
 		waddstr (ncwin->overlay, ncwin->title[i].utf8);	

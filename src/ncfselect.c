@@ -2,7 +2,7 @@
  * File              : ncfselect.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 08.05.2024
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 #include "colors.h"
@@ -15,8 +15,10 @@
 
 #ifdef _WIN32
 #define SLASH "\\"
+#define SLASH_ '\\'
 #else
 #define SLASH "/"
+#define SLASH_ '/'
 #endif
 
 static char * staticpath = NULL;
@@ -114,6 +116,8 @@ void nc_fselect_refresh(NcFselect *fselect, int selected)
 	// reload list
 	nc_fselect_set_value(fselect);
 	nc_list_set_selected(&fselect->nclist, selected);
+	nc_win_set_title(&fselect->nclist.ncwidget.ncwin,
+		 	fselect->path);
 }
 
 void nc_fselect_set(NcFselect *fselect, const char *path){
@@ -122,9 +126,14 @@ void nc_fselect_set(NcFselect *fselect, const char *path){
 	nc_fselect_refresh(fselect, 0);
 }
 
-const struct dirent * nc_fselect_get(NcFselect *fselect){
+char * nc_fselect_get(NcFselect *fselect){
 	int i = nc_list_get_selected(&fselect->nclist);
-	return fselect->dirents[i];
+	char *path = malloc(BUFSIZ);
+	if (!path)
+		return NULL;
+	sprintf(path, "%s" SLASH "%s", fselect->path,
+		 	fselect->dirents[i]->d_name);
+	return path;
 }
 
 NCRET nc_fselect_callback(
@@ -145,7 +154,8 @@ NCRET nc_fselect_callback(
 				int selected = 
 						nc_list_get_selected(&fselect->nclist);
 				if (selected >= 0){
-					if (fselect->dirents[selected]->d_type == DT_DIR){
+					if (is_dir(fselect->path, fselect->dirents[selected]))
+					{
 						if (strcmp(fselect->dirents[selected]->d_name, "..")){
 							strcat(fselect->path, SLASH);
 							strcat(fselect->path,
@@ -154,6 +164,10 @@ NCRET nc_fselect_callback(
 						} else {
 							int i = lastpath(fselect->path);
 							fselect->path[i] = 0;
+							if (i == 0){
+								fselect->path[0] = SLASH_;
+								fselect->path[1] = 0;
+							}
 						}
 						nc_fselect_refresh(fselect, selected);
 					}
@@ -183,7 +197,6 @@ void nc_fselect_activate(
 
 NcWidget *nc_fselect_new(
 		NcWin *parent, 
-		const char *title, 
 		int h, int w, int y, int x, 
 		int color, 
 		const char *path,
@@ -196,7 +209,7 @@ NcWidget *nc_fselect_new(
 		)
 {
 	NcWidget *widget = 
-		nc_list_new(parent, title, h, w, y, x, color,
+		nc_list_new(parent, NULL, h, w, y, x, color,
 			 	NULL, 0, box, shadow);
 	if (!widget)
 		return NULL;

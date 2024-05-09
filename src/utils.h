@@ -2,7 +2,7 @@
  * File              : utils.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -10,7 +10,6 @@
 #define NC_UTILS_H
 
 #include <curses.h>
-#include <ncurses.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>

@@ -2,7 +2,7 @@
  * File              : fm.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 04.09.2021
- * Last Modified Date: 07.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -256,18 +256,6 @@ char * dname(const char *path) {
 	return d;
 }
 
-static int lastpath(const char *path) {
-		const char *slash;
-#ifdef _WIN32
-	 	slash = strrchr(path, '\\');
-#else
-	 	slash = strrchr(path, '/');
-#endif
-		if (!slash || slash == path)
-			return 0;
-		return slash - path;
-}
-
 /* return codes of fcopy functions */
 enum {
 	FCP_NOERR = 0,
@@ -476,7 +464,7 @@ struct dirent {
 
 /* returns pointer to path string without 
  * last path component*/
-const char *
+static const char *
 basename(const char *path)
 {
 	const char *dash = strrchr(path, '\\');
@@ -487,9 +475,8 @@ basename(const char *path)
 
 /* returns allocated string with directory path 
  * or NULL on error */
-char *
-dirname(path)
-        const char *path;
+static char *
+dirname(const char *path)
 {
 		static char *bname = NULL;
 		const char *endp;
@@ -551,7 +538,7 @@ dirname(path)
    returning less than, equal to or greater than zero if S1 is less than,
    equal to or greater than S2 (for more info, see the Glibc texinfo doc).  */
 
-int
+static int
 strverscmp (const char *s1, const char *s2)
 {
   const unsigned char *p1 = (const unsigned char *) s1;
