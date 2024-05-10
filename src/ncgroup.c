@@ -2,14 +2,13 @@
  * File              : ncgroup.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 08.05.2024
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 10.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 #include "ncwidgets.h"
 #include "struct.h"
 #include "keys.h"
 #include <curses.h>
-#include <ncurses.h>
 
 NcGroup *_nc_group_node_new(NcWidget *object)
 {
@@ -100,7 +99,7 @@ nc_group_cb(NcWidget *widget, void *userdata, chtype key)
 		case KEY_MOUSE:
 			{
 				MEVENT event;
-				if (getmouse(&event) == OK) {
+				if (nc_getmouse(&event) == OK) {
 					if (event.bstate & BUTTON1_PRESSED){
 						NcWin *win = NULL;
 						win = &d->ptr->object->ncwin;

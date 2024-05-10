@@ -13,7 +13,6 @@
 #include "fm.h"
 
 #include <curses.h>
-#include <ncurses.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -217,7 +216,7 @@ void nc_list_activate(
 			case KEY_MOUSE:
 				{
 					MEVENT event;
-					if (getmouse(&event) == OK) {
+					if (nc_getmouse(&event) == OK) {
 						if (wenclose(nclist->ncwidget.ncwin.overlay, event.y, event.x)){
 							int x, y, h, w, i;
 							getbegyx(nclist->ncwidget.ncwin.overlay, y, x);

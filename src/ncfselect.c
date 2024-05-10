@@ -2,14 +2,13 @@
  * File              : ncfselect.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 08.05.2024
- * Last Modified Date: 09.05.2024
+ * Last Modified Date: 10.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 #include "colors.h"
 #include "ncwidgets.h"
 #include "struct.h"
 #include "fm.h"
-#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,18 +28,15 @@ static bool is_dir(const char *path, const struct dirent *d){
 	char filepath[BUFSIZ];
 	snprintf(filepath, BUFSIZ-1,
 		 	"%s" SLASH "%s", path, d->d_name);
-	DIR *dir;
-	if ((dir = opendir(filepath))){
-		closedir(dir);
-		return true;
-	}
-	return false;
+	return isdir(filepath);
 }
 
 static int file_compar(
-		const struct dirent **a, 
-		const struct dirent **b)
+		const void *_a, 
+		const void *_b)
 {
+		const struct dirent **a = _a; 
+		const struct dirent **b = _b;
 	// check if dir
 	if (
 			is_dir(staticpath, *a) && 
@@ -162,12 +158,7 @@ NCRET nc_fselect_callback(
 									fselect->dirents[selected]->d_name);
 							selected = 0;
 						} else {
-							int i = lastpath(fselect->path);
-							fselect->path[i] = 0;
-							if (i == 0){
-								fselect->path[0] = SLASH_;
-								fselect->path[1] = 0;
-							}
+							parentdir(fselect->path);
 						}
 						nc_fselect_refresh(fselect, selected);
 					}

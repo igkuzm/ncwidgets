@@ -2,7 +2,7 @@
  * File              : ncentry.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 16.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -10,7 +10,7 @@
 #include "struct.h"
 #include "utils.h"
 #include "keys.h"
-#include <ncurses.h>
+#include <curses.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -328,7 +328,7 @@ void nc_entry_activate(
 			case KEY_MOUSE:
 				{
 					MEVENT event;
-					if (getmouse(&event) == OK) {
+					if (nc_getmouse(&event) == OK) {
 						if (wenclose(ncentry->ncwidget.ncwin.overlay, event.y, event.x)){
 							int x, y, h, w, i;
 							getbegyx(ncentry->ncwidget.ncwin.overlay, y, x);

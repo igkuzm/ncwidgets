@@ -2,7 +2,7 @@
  * File              : dialog.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 08.05.2024
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 10.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -11,7 +11,6 @@
 #include "strsplit.h"
 #include "struct.h"
 #include "utils.h"
-#include <ncurses.h>
 
 static NCRET callback(NcWidget *widget, void *data, chtype ch)
 {

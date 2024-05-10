@@ -2,7 +2,7 @@
  * File              : fm.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 04.09.2021
- * Last Modified Date: 09.05.2024
+ * Last Modified Date: 10.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -27,13 +27,6 @@ extern "C" {
  */
 static bool fexists(const char *path);
 
-/* isdir
- * true if directory at path exists
- * and is accesable
- * %path - directory path
- */
-static bool isdir(const char *path);
-
 /* fsize
  * return file size
  * %path - file path
@@ -43,7 +36,21 @@ static off_t fsize(const char *path);
 /* homedir
  * return allocated string with path to home directory
  */
-static char * homedir(void);
+static char * homedir();
+
+/* parentdir
+ * modify argument string - remove last path component
+ * from path string
+ * %path - name or path of file
+ */
+static const char * parentdir(char *path);
+
+/* isdir
+ * true if directory at path exists
+ * and is accesable
+ * %path - directory path
+ */
+static bool isdir(const char *path);
 
 /* fext
  * return file extension or NULL on error 
@@ -56,20 +63,16 @@ static const char * fext(const char *filename);
  * extension and path
  * %path - name or path of file
  */
-static char * fname(char *path);
-
-/* lastpath
- * return last path component 
- * %path - name or path of file
- */
-static int lastpath(const char *path);
+static char * fname(
+		char *path);
 
 /* dname
  * return allocated string with name of 
  * directory path (like POSIX dirname())
  * %path - path of file
  */
-static char * dname(const char *path);
+static char * dname(
+		const char *path);
 
 /* fcopy 
  * copy and overwrite file 
@@ -77,7 +80,8 @@ static char * dname(const char *path);
  * %from - filepath source file
  * %to   - filepath dastination file 
  */ 
-static int fcopy(const char *from, const char *to);
+static int fcopy(
+		const char *from, const char *to);
 
 /* dcopy 
  * copy directory recursive
@@ -87,8 +91,9 @@ static int fcopy(const char *from, const char *to);
  * %overwrite - overwrite destination file if true
  * %error - pointer to allocated error message
 */ 
-static int dcopy(const char *from, const char *to,
-		             bool overwrite, char **error);
+static int dcopy(
+		const char *from, const char *to,
+		bool overwrite, char **error);
 
 /* newdir
  * create new directory
@@ -97,7 +102,8 @@ static int dcopy(const char *from, const char *to,
  * %path - directory path with name
  * %mode - access mode (not used in windows)
  */
-static int newdir(const char *path, int mode);
+static int newdir(
+		const char *path, int mode);
 
 /*
  * POSIX functions for Windows
@@ -108,8 +114,8 @@ static int newdir(const char *path, int mode);
  * const char *basename(const char *path);
  *
  * dirname
- * returns allocated string with the path without last 
- * component or NULL on error
+ * returns allocated string with the path without last component 
+ * or NULL on error
  * %path - file path
  * char *dirname(const char *path);
  *
@@ -188,20 +194,32 @@ off_t fsize(const char *path) {
 
 char *homedir(void)
 {
-	char *p = (char *)malloc(BUFSIZ);
-	if (!p){
-		perror("malloc");
-		return NULL;
-	}
+	char homedir[BUFSIZ];
 #ifdef _WIN32
-	snprintf(p, BUFSIZ, "%s%s", 
-			getenv("HOMEDRIVE"), getenv("HOMEPATH"));
+	snprintf(homedir, BUFSIZ, "%s%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"));
 #else
-	snprintf(p, BUFSIZ, "%s", 
-			getenv("HOME"));
+	snprintf(homedir, BUFSIZ,
+		 	"%s", getenv("HOME"));
 #endif
-	return p;																								        
+	return strdup(homedir);																								        
 }
+
+const char * parentdir(char *path) {
+	const char *slash;
+#ifdef _WIN32
+	slash	= strrchr(path, '\\');
+#else
+	slash	= strrchr(path, '/');
+#endif
+	if (slash && slash != path)
+		path[slash-path] = 0;
+#ifndef _WIN32
+	else
+		strcpy(path, "/");
+#endif
+	return path;
+}
+
 
 bool isdir(const char *path) {
 #if defined _WIN32
@@ -423,8 +441,8 @@ int newdir(const char *path, int mode)
 	return mkdir(path);
 #else
 	return mkdir(path, mode);
-}
 #endif
+}
 
 /* POSIX FUNCTIONS FOR WINDOWS */
 #ifdef _WIN32
@@ -451,8 +469,6 @@ enum
 # define DT_WHT		DT_WHT
   };
 
-typedef unsigned long ino_t;
-
 struct dirent {
 	ino_t          d_ino;       /* inode number */
 	off_t          d_off;       /* offset to the next dirent */
@@ -462,9 +478,39 @@ struct dirent {
 	char           d_name[256]; /* filename */
 };
 
+/*
+ * This is an internal data structure. Good programmers will not use it
+ * except as an argument to one of the functions below.
+ * dd_stat field is now int (was short in older versions).
+ */
+typedef struct
+{
+	/* disk transfer area for this dir */
+	struct _finddata_t	dd_dta;
+
+	/* dirent struct to return from dir (NOTE: this makes this thread
+	 * safe as long as only one thread uses a particular DIR struct at
+	 * a time) */
+	struct dirent		dd_dir;
+
+	/* _findnext handle */
+	intptr_t		dd_handle;
+
+	/*
+	 * Status of search:
+	 *   0 = not started yet (next entry to read is first entry)
+	 *  -1 = off the end
+	 *   positive = 0 based index of next entry
+	 */
+	int			dd_stat;
+
+	/* given path for dir with search pattern (struct is extended) */
+	char			dd_name[1];
+} DIR;
+
 /* returns pointer to path string without 
  * last path component*/
-static const char *
+const char *
 basename(const char *path)
 {
 	const char *dash = strrchr(path, '\\');
@@ -475,50 +521,50 @@ basename(const char *path)
 
 /* returns allocated string with directory path 
  * or NULL on error */
-static char *
-dirname(const char *path)
-{
-		static char *bname = NULL;
-		const char *endp;
+/*char **/
+/*dirname(const char *path)*/
+/*{*/
+		/*static char *bname = NULL;*/
+		/*const char *endp;*/
 
-		if (bname == NULL) {
-						bname = (char *)malloc(MAX_PATH);
-						if (bname == NULL)
-										return(NULL);
-		}
+		/*if (bname == NULL) {*/
+						/*bname = (char *)malloc(MAX_PATH);*/
+						/*if (bname == NULL)*/
+										/*return(NULL);*/
+		/*}*/
 
-		/* Empty or NULL string gets treated as "." */
-		if (path == NULL || *path == '\0') {
-						(void)strcpy(bname, ".");
-						return(bname);
-		}
+		/*[> Empty or NULL string gets treated as "." <]*/
+		/*if (path == NULL || *path == '\0') {*/
+						/*(void)strcpy(bname, ".");*/
+						/*return(bname);*/
+		/*}*/
 
-		/* Strip trailing slashes */
-		endp = path + strlen(path) - 1;
-		while (endp > path && *endp == '\\')
-						endp--;
+		/*[> Strip trailing slashes <]*/
+		/*endp = path + strlen(path) - 1;*/
+		/*while (endp > path && *endp == '\\')*/
+						/*endp--;*/
 
-		/* Find the start of the dir */
-		while (endp > path && *endp != '\\')
-						endp--;
+		/*[> Find the start of the dir <]*/
+		/*while (endp > path && *endp != '\\')*/
+						/*endp--;*/
 
-		/* Either the dir is "/" or there are no slashes */
-		if (endp == path) {
-						(void)strcpy(bname, *endp == '\\' ? "\\" : ".");
-						return(bname);
-		} else {
-						do {
-										endp--;
-						} while (endp > path && *endp == '\\');
-		}
+		/*[> Either the dir is "/" or there are no slashes <]*/
+		/*if (endp == path) {*/
+						/*(void)strcpy(bname, *endp == '\\' ? "\\" : ".");*/
+						/*return(bname);*/
+		/*} else {*/
+						/*do {*/
+										/*endp--;*/
+						/*} while (endp > path && *endp == '\\');*/
+		/*}*/
 
-		if (endp - path + 2 > MAX_PATH) {
-						return(NULL);
-		}
-		(void)strncpy(bname, path, endp - path + 1);
-		bname[endp - path + 1] = '\0';
-		return(bname);
-}
+		/*if (endp - path + 2 > MAX_PATH) {*/
+						/*return(NULL);*/
+		/*}*/
+		/*(void)strncpy(bname, path, endp - path + 1);*/
+		/*bname[endp - path + 1] = '\0';*/
+		/*return(bname);*/
+/*}*/
 
 #define ISDIGIT(a) isdigit(a)
 
@@ -538,75 +584,8 @@ dirname(const char *path)
    returning less than, equal to or greater than zero if S1 is less than,
    equal to or greater than S2 (for more info, see the Glibc texinfo doc).  */
 
-static int
-strverscmp (const char *s1, const char *s2)
-{
-  const unsigned char *p1 = (const unsigned char *) s1;
-  const unsigned char *p2 = (const unsigned char *) s2;
-  unsigned char c1, c2;
-  int state;
-  int diff;
-
-  /* Symbol(s)    0       [1-9]   others  (padding)
-     Transition   (10) 0  (01) d  (00) x  (11) -   */
-  static const unsigned int next_state[] =
-    {
-      /* state    x    d    0    - */
-      /* S_N */  S_N, S_I, S_Z, S_N,
-      /* S_I */  S_N, S_I, S_I, S_I,
-      /* S_F */  S_N, S_F, S_F, S_F,
-      /* S_Z */  S_N, S_F, S_Z, S_Z
-    };
-
-  static const int result_type[] =
-    {
-      /* state   x/x  x/d  x/0  x/-  d/x  d/d  d/0  d/-
-                 0/x  0/d  0/0  0/-  -/x  -/d  -/0  -/- */
-
-      /* S_N */  CMP, CMP, CMP, CMP, CMP, LEN, CMP, CMP,
-                 CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP,
-      /* S_I */  CMP, -1,  -1,  CMP, +1,  LEN, LEN, CMP,
-                 +1,  LEN, LEN, CMP, CMP, CMP, CMP, CMP,
-      /* S_F */  CMP, CMP, CMP, CMP, CMP, LEN, CMP, CMP,
-                 CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP,
-      /* S_Z */  CMP, +1,  +1,  CMP, -1,  CMP, CMP, CMP,
-                 -1,  CMP, CMP, CMP
-    };
-
-  if (p1 == p2)
-    return 0;
-
-  c1 = *p1++;
-  c2 = *p2++;
-  /* Hint: '0' is a digit too.  */
-  state = S_N | ((c1 == '0') + (ISDIGIT (c1) != 0));
-
-  while ((diff = c1 - c2) == 0 && c1 != '\0')
-    {
-      state = next_state[state];
-      c1 = *p1++;
-      c2 = *p2++;
-      state |= (c1 == '0') + (ISDIGIT (c1) != 0);
-    }
-
-  state = result_type[state << 2 | (((c2 == '0') + (ISDIGIT (c2) != 0)))];
-
-  switch (state)
-    {
-    case CMP:
-      return diff;
-
-    case LEN:
-      while (ISDIGIT (*p1++))
-        if (!ISDIGIT (*p2++))
-          return 1;
-
-      return ISDIGIT (*p2) ? -1 : diff;
-
-    default:
-      return state;
-    }
-}
+int
+strverscmp (const char *s1, const char *s2);
 
 static int alphasort(
 		const struct dirent **a, const struct dirent **b)
@@ -678,8 +657,9 @@ scandir(
 	if (namelist)
 		*namelist = array;
 	else{
+		int i;
 		for (i = 0; i < len; ++i)
-			free(array[i])
+			free(array[i]);
 		free(array);
 	}
 

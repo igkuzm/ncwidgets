@@ -2,7 +2,7 @@
  * File              : nccalendar.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 29.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -10,7 +10,7 @@
 #include "struct.h"
 #include "keys.h"
 #include "utils.h"
-#include <ncurses.h>
+#include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -223,7 +223,7 @@ void nc_calendar_activate(
 			case KEY_MOUSE:
 				{
 					MEVENT event;
-					if (getmouse(&event) == OK) {
+					if (nc_getmouse(&event) == OK) {
 						if (wenclose(nccalendar->ncwidget.ncwin.overlay, event.y, event.x)){
 							int x, y, h, w, i;
 							getbegyx(nccalendar->ncwidget.ncwin.overlay, y, x);

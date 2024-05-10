@@ -2,7 +2,7 @@
  * File              : ncbutton.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 14.06.2023
- * Last Modified Date: 08.05.2024
+ * Last Modified Date: 09.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -36,7 +36,7 @@ void nc_button_activate(
 			case KEY_MOUSE:
 				{
 					MEVENT event;
-					if (getmouse(&event) == OK) {
+					if (nc_getmouse(&event) == OK) {
 						if (wenclose(ncbutton->ncwidget.ncwin.overlay, event.y, event.x)){
 							if (event.bstate & BUTTON1_PRESSED){
 								if (callback)

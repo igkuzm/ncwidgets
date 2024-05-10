@@ -2,13 +2,12 @@
  * File              : ncwin.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 12.06.2023
- * Last Modified Date: 09.05.2024
+ * Last Modified Date: 10.05.2024
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
 #include "struct.h"
 #include <curses.h>
-#include <ncurses.h>
 #include <panel.h>
 #include <stdlib.h>
 #include "colors.h"
@@ -49,7 +48,7 @@ nc_win_new(
 		const char *title, 
 		int h, int w, int y, int x, 
 		int color,
-		bool box, 
+		bool makebox, 
 		bool shadow) 
 {
 	int i;
@@ -64,7 +63,7 @@ nc_win_new(
 	ncwin->spanel = NULL;
 	ncwin->color  = color; 
 	ncwin->title  = NULL;
-	ncwin->box    = box;
+	ncwin->box    = makebox;
 	
 	if (shadow){
 		if (parent){
@@ -87,7 +86,7 @@ nc_win_new(
 	}
 	wbkgd(ncwin->overlay, COLOR_PAIR(color));
 
-	if (box)
+	if (ncwin->box)
 		box(ncwin->overlay, 0, 0);
 	
 	if (title){
